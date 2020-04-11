@@ -3,3 +3,6 @@ _site
 .jekyll-metadata
 .DS_store
 /_drafts
+*.pdf
+*.tex
+auto

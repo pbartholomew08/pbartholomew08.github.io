@@ -1,0 +1,79 @@
+#+BEGIN_EXPORT html
+---
+layout: post
+title: SICP Lecture 1A - Introduction
+---
+#+END_EXPORT
+
+#+BEGIN_QUOTE
+Computer science is a terrible name for this business - first of all it's not science, it might be
+engineering or it might be art ...
+It's also not really very much about computers. -- Hal Abelson
+#+END_QUOTE
+
+* Introduction
+
+After several abortive attempts what better time to work through =SICP= than the =COVID-19= lockdown!
+These are my notes based on the =MIT-OCW= lecture series videos in combination with the =MIT-OCW=
+lecture notes from 2007 and the /Structure and Interpretation of Computer Programs 2^{nd} ed./ book
+itself.
+
+"Computer science" could be better understood as the /study of processes/ that is "how to",
+more formally /imperative/, knowledge.
+This contrasts with "what is", or /declarative/, knowledge.
+As an example, the statement
+\begin{equation*}
+  \begin{split}
+    \sqrt{x}\ \mbox{is the } y\ \mbox{such that} \\
+    y^2 = x,\ y \geq 0
+  \end{split}
+\end{equation*}
+defines what the square root is, whereas Heron of Alexandria's algorithm
+\begin{equation*}
+  \begin{split}
+    \mbox{Given an initial guess } y_0\\
+    y_{n+1} = \frac{y_n + x/y_n}{2}\ \mbox{while } \left|y^2_n - x\right| > \varepsilon
+  \end{split}
+\end{equation*}
+is a /procedure/ for how to compute (or estimate) the square root.
+/Evaluating/ the procedure results in /process/ that evolves the input data to return a value.
+
+Ultimately, we want to be able to perform complex tasks, this necessarily results in complex
+processes, the aim of studying processes is /controlling complexity/.
+=SICP= develops three ways of managing complexity:
+1) Procedure and data abstraction
+   - hiding complexity in "black boxes"
+2) Conventional interfaces and programming paradigms
+   - standard ways of connecting simpler pieces
+     - manifest typing
+     - streams
+     - object oriented programming
+3) Metalinguistic abstraction
+   - tayloring a language to fit the problem domain
+
+* Black boxes
+
+Black boxes allow us to take the details of something, /e.g./ finding the square root of $x$, and
+abstract it away as a primitive object, /e.g./ a procedure ~sqrt~ which when supplied with $x$ returns
+$y = \sqrt{x}$.
+Knowing what ~sqrt~ does allows a user to use ~sqrt~ whenever a square root is needed without
+necessarily knowing /how/ to compute $\sqrt{x}$, allowing them to concentrate on the task at hand and
+combine it with other procedures to build yet more complex procedures.
+
+A black box can also be used to express generality, for instance the method for finding a square
+root described above is an example of finding the fixed point of a function
+\begin{equation*}
+  f \left( y \right) = y
+\end{equation*}
+so ~sqrt~ could be expressed as finding the fixed point of the function
+\begin{equation*}
+  f \left( y_{n+1} \right) = \frac{y_n + x / y_n}{2}
+\end{equation*}
+
+In order to build these black boxes, a language must provide:
+- Primitive objects
+  - what can we accept as true?
+- Means of combination
+  - how can we build compound elements from simpler ones?
+- Means of abstraction
+  - how can we express these compound elements as if they were primitive ones?
