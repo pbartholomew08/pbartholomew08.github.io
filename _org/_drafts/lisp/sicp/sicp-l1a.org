@@ -3,6 +3,8 @@
 layout: post
 title: SICP Lecture 1A - Introduction
 ---
+
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 #+END_EXPORT
 
 #+BEGIN_QUOTE
@@ -36,11 +38,11 @@ defines what the square root is, whereas Heron of Alexandria's algorithm
   \end{split}
 \end{equation*}
 is a /procedure/ for how to compute (or estimate) the square root.
-/Evaluating/ the procedure results in /process/ that evolves the input data to return a value.
+/Evaluating/ the procedure results in a /process/ that evolves the input data to return a value.
 
 Ultimately, we want to be able to perform complex tasks, this necessarily results in complex
 processes, the aim of studying processes is /controlling complexity/.
-=SICP= develops three ways of managing complexity:
+=SICP= studies three approaches managing complexity:
 1) Procedure and data abstraction
    - hiding complexity in "black boxes"
 2) Conventional interfaces and programming paradigms
@@ -52,6 +54,7 @@ processes, the aim of studying processes is /controlling complexity/.
    - tayloring a language to fit the problem domain
 
 * Black boxes
+<<sec:black-boxes>>
 
 Black boxes allow us to take the details of something, /e.g./ finding the square root of $x$, and
 abstract it away as a primitive object, /e.g./ a procedure ~sqrt~ which when supplied with $x$ returns
@@ -77,3 +80,213 @@ In order to build these black boxes, a language must provide:
   - how can we build compound elements from simpler ones?
 - Means of abstraction
   - how can we express these compound elements as if they were primitive ones?
+
+** A brief introduction to =LISP=
+<<sec:lisp-intro>>
+
+In =SICP= the =scheme= dialect of =LISP= is used (I will be using the =guile= implementation of =scheme=),
+this brief introduction covers most of the basics of =LISP/scheme=.
+
+*** =LISP= primitives
+<<sec:lisp-primitives>>
+
+The simplest elements of =LISP= are the /self-evaluating/ expressions, symbols which evaluate as
+themselves, this includes ~numbers~, ~strings~ and ~Booleans~, /e.g./ ~3~, ~"hello world!"~ and ~#t~ and ~#f~.
+These primitive objects can be manipulated using built-in procedures such as ~+~, ~-~, ~*~, ~/~,
+~string-length~, ~string=?~, ~and~ and ~or~.
+Interestingly while these operations are generally treated as /primitive/, they are in fact names or
+/symbols/ for procedures /e.g./ ~+~ is the name for the procedure ~sum~.
+
+*** =LISP= combinations
+<<sec:lisp-combinations>>
+
+=LISP= symbols are combined using parentheses to form a /combination/ that is evaluated following
+prefix-notation rules, /e.g./
+#+BEGIN_SRC scheme
+  (+ 3 17.4 5)
+#+END_SRC
+is a combination comprising an /operator/ whose value is a procedure followed by a list of operands.
+/Evaluating/ a combination returns a /value/ by applying the operator procedure to the operand values
+/i.e./ the operands are evaluated before evaluating the combination, allowing for /nested/ combinations
+/e.g./
+#+BEGIN_SRC scheme
+  (+ (* 2 3)
+     4)
+#+END_SRC
+is evaluated as
+#+BEGIN_SRC scheme
+  (+ 6 4)
+#+END_SRC
+returning ~10~ as its value.
+
+*** Abstracting in =scheme=
+<<sec:scheme-abstractions>>
+
+It would not be very useful to have to write out procedures in full whenever they are required or
+have mysterious numbers floating around, to resolve this abstraction is used to generate a /name/
+whose /value/ is the object, for instance
+#+BEGIN_SRC scheme
+  (define pi 3.14)
+  (define a (* 5 5))
+#+END_SRC
+creates two symbols ~pi~ and ~a~ whose values are ~3.14~ and the procedure ~(* 5 5)~, respectively.
+
+The above expressions are /special forms/, in that they don't follow the normal rules of evaluation.
+Consider that if they did the interpreter would first have to evaluate ~pi~ before applying the ~define~
+procedure to the values of ~pi~ and ~3.14~ when the intention of the expression is to associate ~3.14~
+with the symbol ~pi~ in the current /environment/ (here the /global/ environment).
+Following the definition, evaluating ~pi~ in this environment will return the value ~3.14~.
+
+*** Evaluating combinations
+<<sec:eval-combinations>>
+
+As mentioned above in \S[[sec:lisp-combinations]] a combination is evaluated in a two step procedure:
+1) First, evaluate sub-expressions in the combination
+2) Apply the procedure that is the value of the leftmost sub-expression (the operator) to the
+   arguments obtained as the values of the remaining sub-expressions (the operands).
+
+As step 1 shows, the evaluation process is /recursive/ in that it calls itself on the sub-expressions
+of a combination.
+This recursive definition allows evaluation of deeply nested combinations to be expressed very
+clearly and succinctly.
+A useful way to visualise how this evaluation process computes a value is by /tree accumulation/,
+given a combination to evaluate
+#+BEGIN_SRC scheme
+  (* (+ 2 (* 4 6))
+     (+ 3 5 7))
+#+END_SRC
+the process can be viewed as a tree where nodes represent evaluations and values are passed up the
+branches.
+Starting from the root node we evaluate it by passing in the operator and operands from its
+branches, the nodes at the end of these branches are evaluated and so on until a terminal node with
+a primitive procedure or value is reached, the values then percolate back up the tree to return a
+value at the root node.
+
+*** Abstracting procedures
+<<sec:abstract-proc>>
+
+As shown in \S[[sec:scheme-abstractions]] the special form ~define~ gives a value to a name which may be a
+primitive expression as in the case of ~pi~ or a procedure as for ~a~.
+In the example ~a~'s value is the procedure for squaring ~5~, this is very specific and it is likely to
+be more useful to create a general procedure, in =scheme= this is achieved by the ~lambda~ special form.
+A procedure to compute the square of an arbitrary number could be created as follows
+#+BEGIN_SRC scheme
+  (lambda (x)
+    (* x x))
+#+END_SRC
+where the first operand is the list of /formal parameters/ and the second is the /body/ of procedure,
+evaluating the ~lambda~ expression returns a procedure object which is some kind of machine
+representation of a procedure.
+
+Following the idea that ~define~ gives a value to a name we can combine these forms to create a named
+procedure as follows
+#+BEGIN_SRC scheme
+  (define square (lambda (x)
+                   (* x x)))
+#+END_SRC
+which will produce a name ~square~ whose value is the procedure to square a number.
+This is so useful and common an action that =scheme= provides the following /syntactic sugar/ for naming
+a procedure
+#+BEGIN_SRC scheme
+  (define (square x)
+    (* x x))
+#+END_SRC
+which is simply a shorthand for the previous definition.
+Either way the resulting named procedure is called as ~(square 4)~ for example which should return ~16~;
+for the user ~square~ appears as a new primitive, indistinguishable from those built-in to the =scheme=
+implementation which they could then use to build further procedures such as
+#+BEGIN_SRC scheme
+  (define (sum-of-squares x y)
+    (+ (square x)
+       (square y)))
+#+END_SRC
+This is better than simply writing out the full algebraic expression
+#+BEGIN_SRC scheme
+  (define (sum-of-squares x y)
+    (+ (* x x)
+       (* y y)))
+#+END_SRC
+as in the former we have captured the process of squaring a number in the ~square~ procedure,
+introducing modularity allowing for reuse of ~square~ elsewhere and increasing readability by
+suppressing detail through abstraction.
+
+The basic steps of procedural abstraction are
+1) Identify steps or "modules" in a process
+2) Capture modules in a procedural abstraction
+3) Create a procedure to control the interaction between modules
+this idea can be applied recursively to each module, simplifying their implementation too.
+
+* Example: Computing square roots
+
+As pointed out in \S[[sec:black-boxes]] Heron of Alexandria's algorithm for computing square roots can be
+expressed as finding the fixed point of a function, it is in fact an application of Newton's method
+\begin{equation*}
+  \begin{split}
+    f \left( y_{n+1} \right) &= f \left( y_n \right) + \left. \Delta y \frac{\partial f}{\partial y}
+    \right|_n = 0 \\
+    \Rightarrow y_{n+1} &= y_n - \left. \frac{\partial f}{\partial y} \right|^{-1}_n f \left( y_n
+    \right)
+  \end{split}
+\end{equation*}
+to the function $f\left( y \right) = y^2 - x$.
+
+Newton's method has three major components:
+1) testing whether a guess is good enough
+2) if not yet good enough, compute an improved guess and
+3) organise testing and updating the guess.
+
+A simple test of whether the guess is good enough is to square it and compare with ~x~, this is
+implemented in listing\nbsp[[src:good-enough?]].
+An improved guess is computed by subtracting the inverse gradient times the current function
+evaluation from the current guess, implemented in listing\nbsp[[src:improve-guess]].
+
+#+CAPTION: Testing whether the guess sufficiently approximates $\sqrt{x}$
+#+NAME: src:good-enough?
+#+BEGIN_SRC scheme
+  (define (good-enough? guess x)
+    (< (abs (func guess x)
+       0.001))
+#+END_SRC
+
+#+CAPTION: Computing an improved guess to $\sqrt{x}$ given the current guess
+#+NAME: src:improve-guess
+#+BEGIN_SRC scheme
+  (define (grad guess)
+    (* 2 guess))
+  (define (improve-guess guess x)
+    (- guess (/ (func guess x)
+                (grad guess))))
+#+END_SRC
+
+The process of repeatedly testing and if necessary improving the guess is implemented by the
+~sqrt-iter~ procedure which uses the ~if~ special form to determine which action to take based on the
+current guess, recursively calling itself with an improved guess if not sufficiently close to the
+solution.
+Finally the ~sqrt~ function pulls this all together, using ~1.0~ as an initial guess.
+Note that in the above the function evaluation has been abstracted as the ~func~ procedure also
+defined here.
+
+#+CAPTION: Defining the ~sqrt~ procedure
+#+NAME: src:sqrt
+#+BEGIN_SRC scheme
+  (define (func guess x)
+    (- (square guess) x))
+
+  (define (sqrt-iter guess x)
+    (if (good-enough? guess x)
+        guess
+        (sqrt-iter (improve-guess guess x) x)))
+
+  (define (sqrt x)
+    (sqrt-iter 1.0 x))
+#+END_SRC
+
+Applying ~sqrt~ to some numbers whose square root is known yields
+#+BEGIN_SRC scheme
+  (sqrt 4)
+#+END_SRC
+and
+#+BEGIN_SRC scheme
+  (sqrt 2)
+#+END_SRC
+which should be close to expected values (note that ~good-enough?~ is relatively crude).
