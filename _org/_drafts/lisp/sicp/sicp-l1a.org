@@ -19,6 +19,8 @@ After several abortive attempts what better time to work through =SICP= than the
 These are my notes based on the =MIT-OCW= lecture series videos in combination with the =MIT-OCW=
 lecture notes from 2007 and the /Structure and Interpretation of Computer Programs 2^{nd} ed./ book
 itself.
+This first video lecture covers roughly \S1.1.1-1.1.5 and \S1.1.7 of =SICP=, and is mostly contained in
+lecture notes 1 and 2.
 
 "Computer science" could be better understood as the /study of processes/ that is "how to",
 more formally /imperative/, knowledge.
@@ -53,8 +55,16 @@ processes, the aim of studying processes is /controlling complexity/.
 3) Metalinguistic abstraction
    - tayloring a language to fit the problem domain
 
+Around this point in the lecture Hal Abelson points out that the complexity stems only from the
+problem itself: a physical implementation of a system using /real/ components must also tackle
+problems arising from physical constraints such as noise, tolerance, /etc/.; in contrast processes in
+computer science are built from ideal /not/ approximated components and thus are really only limited
+by imagination.
+
 * Black boxes
 <<sec:black-boxes>>
+
+The focus of this lecture is introducing black boxes as a means of abstraction.
 
 Black boxes allow us to take the details of something, /e.g./ finding the square root of $x$, and
 abstract it away as a primitive object, /e.g./ a procedure ~sqrt~ which when supplied with $x$ returns
@@ -81,13 +91,13 @@ In order to build these black boxes, a language must provide:
 - Means of abstraction
   - how can we express these compound elements as if they were primitive ones?
 
-** A brief introduction to =LISP=
+* A brief introduction to =LISP=
 <<sec:lisp-intro>>
 
 In =SICP= the =scheme= dialect of =LISP= is used (I will be using the =guile= implementation of =scheme=),
 this brief introduction covers most of the basics of =LISP/scheme=.
 
-*** =LISP= primitives
+** =LISP= primitives
 <<sec:lisp-primitives>>
 
 The simplest elements of =LISP= are the /self-evaluating/ expressions, symbols which evaluate as
@@ -97,7 +107,7 @@ These primitive objects can be manipulated using built-in procedures such as ~+~
 Interestingly while these operations are generally treated as /primitive/, they are in fact names or
 /symbols/ for procedures /e.g./ ~+~ is the name for the procedure ~sum~.
 
-*** =LISP= combinations
+** =LISP= combinations
 <<sec:lisp-combinations>>
 
 =LISP= symbols are combined using parentheses to form a /combination/ that is evaluated following
@@ -119,7 +129,7 @@ is evaluated as
 #+END_SRC
 returning ~10~ as its value.
 
-*** Abstracting in =scheme=
+** Abstracting in =scheme=
 <<sec:scheme-abstractions>>
 
 It would not be very useful to have to write out procedures in full whenever they are required or
@@ -137,7 +147,7 @@ procedure to the values of ~pi~ and ~3.14~ when the intention of the expression 
 with the symbol ~pi~ in the current /environment/ (here the /global/ environment).
 Following the definition, evaluating ~pi~ in this environment will return the value ~3.14~.
 
-*** Evaluating combinations
+** Evaluating combinations
 <<sec:eval-combinations>>
 
 As mentioned above in \S[[sec:lisp-combinations]] a combination is evaluated in a two step procedure:
@@ -162,7 +172,7 @@ branches, the nodes at the end of these branches are evaluated and so on until a
 a primitive procedure or value is reached, the values then percolate back up the tree to return a
 value at the root node.
 
-*** Abstracting procedures
+** Abstracting procedures
 <<sec:abstract-proc>>
 
 As shown in \S[[sec:scheme-abstractions]] the special form ~define~ gives a value to a name which may be a
@@ -187,6 +197,7 @@ procedure as follows
 which will produce a name ~square~ whose value is the procedure to square a number.
 This is so useful and common an action that =scheme= provides the following /syntactic sugar/ for naming
 a procedure
+#+NAME: src:square
 #+BEGIN_SRC scheme
   (define (square x)
     (* x x))
@@ -216,6 +227,46 @@ The basic steps of procedural abstraction are
 3) Create a procedure to control the interaction between modules
 this idea can be applied recursively to each module, simplifying their implementation too.
 
+** Conditional expressions and predicates
+
+In general procedures must perform tests, for example the absolute value of $x$ may be defined as
+\begin{equation*}
+  \left| x \right| =
+  \begin{cases}
+    x & x > 0 \\
+    -x & x < 0 \\
+    0 & \mbox{otherwise}
+  \end{cases}
+\end{equation*}
+in =LISP= such a case analysis is implemented using the ~cond~ expression
+#+BEGIN_SRC scheme
+  (define (abs x)
+    (cond ((> x 0) x)
+          ((< x 0) (- x))
+          (else 0)))
+#+END_SRC
+which follows from the mathematical definition.
+
+The ~cond~ expression consists of a series of /clauses/ made up of a predicate and a /consequent
+expression/.
+Each clause's predicate is evaluated in turn until one returns /true/ when the ~cond~ expression returns
+the value of the corresponding consequent expression, the ~else~ keyword handles the default case.
+
+Whilst ~cond~ handles an arbitrary number of clauses, the ~if~ expression handles the /if-then-else/ case
+where the truth of a single predicate is tested returning either the /consequent/ or the /alternate/
+expression, an alternate definition of ~abs~ is given in listing\nbsp[[src:abs-if]].
+Either one may be implemented in terms of the other, generally a =sceme= implementation would pick one
+and then implement the other.
+
+#+CAPTION: Implementation of ~abs~ using ~if~
+#+NAME: src:abs-if
+#+BEGIN_SRC scheme
+  (define (abs x)
+    (if (< x 0)
+        (- x)
+        x))
+#+END_SRC
+
 * Example: Computing square roots
 
 As pointed out in \S[[sec:black-boxes]] Heron of Alexandria's algorithm for computing square roots can be
@@ -230,21 +281,22 @@ expressed as finding the fixed point of a function, it is in fact an application
 \end{equation*}
 to the function $f\left( y \right) = y^2 - x$.
 
-Newton's method has three major components:
+Applying the process of procedural abstraction outlined above, Newton's method has three major
+components:
 1) testing whether a guess is good enough
 2) if not yet good enough, compute an improved guess and
 3) organise testing and updating the guess.
 
 A simple test of whether the guess is good enough is to square it and compare with ~x~, this is
-implemented in listing\nbsp[[src:good-enough?]].
+implemented in listing\nbsp[[src:good-enough]].
 An improved guess is computed by subtracting the inverse gradient times the current function
 evaluation from the current guess, implemented in listing\nbsp[[src:improve-guess]].
 
 #+CAPTION: Testing whether the guess sufficiently approximates $\sqrt{x}$
-#+NAME: src:good-enough?
+#+NAME: src:good-enough
 #+BEGIN_SRC scheme
   (define (good-enough? guess x)
-    (< (abs (func guess x)
+    (< (abs (func guess x))
        0.001))
 #+END_SRC
 
@@ -262,16 +314,18 @@ The process of repeatedly testing and if necessary improving the guess is implem
 ~sqrt-iter~ procedure which uses the ~if~ special form to determine which action to take based on the
 current guess, recursively calling itself with an improved guess if not sufficiently close to the
 solution.
-Finally the ~sqrt~ function pulls this all together, using ~1.0~ as an initial guess.
+Finally the ~sqrt~ function pulls this all together, using ~1.0~ as an initial guess[fn:1].
 Note that in the above the function evaluation has been abstracted as the ~func~ procedure also
 defined here.
 
 #+CAPTION: Defining the ~sqrt~ procedure
 #+NAME: src:sqrt
-#+BEGIN_SRC scheme
+#+BEGIN_SRC scheme :noweb strip-export :padline no
+  <<src:square>>
   (define (func guess x)
     (- (square guess) x))
-
+  <<src:good-enough>>
+  <<src:improve-guess>>
   (define (sqrt-iter guess x)
     (if (good-enough? guess x)
         guess
@@ -281,12 +335,21 @@ defined here.
     (sqrt-iter 1.0 x))
 #+END_SRC
 
+#+RESULTS: src:sqrt
+: #<unspecified>
+
 Applying ~sqrt~ to some numbers whose square root is known yields
-#+BEGIN_SRC scheme
+#+BEGIN_SRC scheme :noweb strip-export :exports both
+  <<src:sqrt>>
   (sqrt 4)
 #+END_SRC
 and
-#+BEGIN_SRC scheme
+#+BEGIN_SRC scheme :noweb strip-export :exports both
+  <<src:sqrt>>
   (sqrt 2)
 #+END_SRC
 which should be close to expected values (note that ~good-enough?~ is relatively crude).
+
+* Footnotes
+
+[fn:1] It can be shown that using ~1.0~ as an initial guess will converge to the solution.
