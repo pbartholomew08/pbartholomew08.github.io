@@ -15,12 +15,12 @@ It's also not really very much about computers. -- Hal Abelson
 
 * Introduction
 
-After several abortive attempts what better time to work through =SICP= than the =COVID-19= lockdown!
-These are my notes based on the =MIT-OCW= lecture series videos in combination with the =MIT-OCW=
+After several abortive attempts what better time to work through SICP than the =COVID-19= lockdown!
+These are my notes based on the MIT-OCW lecture series videos in combination with the MIT-OCW
 lecture notes from 2007 and the /Structure and Interpretation of Computer Programs 2^{nd} ed./ book
 itself.
-This first video lecture covers roughly \S1.1.1-1.1.5 and \S1.1.7 of =SICP=, and is mostly contained in
-lecture notes 1 and 2.
+This first video lecture covers roughly \S1.1.1-1.1.4 and \S1.1.6-1.1.7 of SICP, and is mostly
+contained in lecture notes 1 and 2.
 
 "Computer science" could be better understood as the /study of processes/ that is "how to",
 more formally /imperative/, knowledge.
@@ -44,7 +44,7 @@ is a /procedure/ for how to compute (or estimate) the square root.
 
 Ultimately, we want to be able to perform complex tasks, this necessarily results in complex
 processes, the aim of studying processes is /controlling complexity/.
-=SICP= studies three approaches managing complexity:
+SICP studies three approaches managing complexity:
 1) Procedure and data abstraction
    - hiding complexity in "black boxes"
 2) Conventional interfaces and programming paradigms
@@ -82,6 +82,8 @@ so ~sqrt~ could be expressed as finding the fixed point of the function
 \begin{equation*}
   f \left( y_{n+1} \right) = \frac{y_n + x / y_n}{2}
 \end{equation*}
+this would fundamentally be the same as Heron's algorithm, although the convergence test would be
+looking for small changes in the result /i.e./ $\Delta{}y\rightarrow0$.
 
 In order to build these black boxes, a language must provide:
 - Primitive objects
@@ -91,26 +93,26 @@ In order to build these black boxes, a language must provide:
 - Means of abstraction
   - how can we express these compound elements as if they were primitive ones?
 
-* A brief introduction to =LISP=
+* A brief introduction to LISP
 <<sec:lisp-intro>>
 
-In =SICP= the =scheme= dialect of =LISP= is used (I will be using the =guile= implementation of =scheme=),
-this brief introduction covers most of the basics of =LISP/scheme=.
+In SICP the scheme dialect of LISP is used (I will be using the guile implementation of scheme),
+this brief introduction covers most of the basics of LISP/scheme.
 
-** =LISP= primitives
+** LISP primitives
 <<sec:lisp-primitives>>
 
-The simplest elements of =LISP= are the /self-evaluating/ expressions, symbols which evaluate as
+The simplest elements of LISP are the /self-evaluating/ expressions, symbols which evaluate as
 themselves, this includes ~numbers~, ~strings~ and ~Booleans~, /e.g./ ~3~, ~"hello world!"~ and ~#t~ and ~#f~.
 These primitive objects can be manipulated using built-in procedures such as ~+~, ~-~, ~*~, ~/~,
 ~string-length~, ~string=?~, ~and~ and ~or~.
 Interestingly while these operations are generally treated as /primitive/, they are in fact names or
 /symbols/ for procedures /e.g./ ~+~ is the name for the procedure ~sum~.
 
-** =LISP= combinations
+** LISP combinations
 <<sec:lisp-combinations>>
 
-=LISP= symbols are combined using parentheses to form a /combination/ that is evaluated following
+LISP symbols are combined using parentheses to form a /combination/ that is evaluated following
 prefix-notation rules, /e.g./
 #+BEGIN_SRC scheme
   (+ 3 17.4 5)
@@ -129,7 +131,7 @@ is evaluated as
 #+END_SRC
 returning ~10~ as its value.
 
-** Abstracting in =scheme=
+** Abstracting in scheme
 <<sec:scheme-abstractions>>
 
 It would not be very useful to have to write out procedures in full whenever they are required or
@@ -175,10 +177,10 @@ value at the root node.
 ** Abstracting procedures
 <<sec:abstract-proc>>
 
-As shown in \S[[sec:scheme-abstractions]] the special form ~define~ gives a value to a name which may be a
+As shown in \S[[sec:scheme-abstractions]] the special form ~define~ links a value to a name which may be a
 primitive expression as in the case of ~pi~ or a procedure as for ~a~.
 In the example ~a~'s value is the procedure for squaring ~5~, this is very specific and it is likely to
-be more useful to create a general procedure, in =scheme= this is achieved by the ~lambda~ special form.
+be more useful to create a general procedure, in scheme this is achieved by the ~lambda~ special form.
 A procedure to compute the square of an arbitrary number could be created as follows
 #+BEGIN_SRC scheme
   (lambda (x)
@@ -194,8 +196,8 @@ procedure as follows
   (define square (lambda (x)
                    (* x x)))
 #+END_SRC
-which will produce a name ~square~ whose value is the procedure to square a number.
-This is so useful and common an action that =scheme= provides the following /syntactic sugar/ for naming
+which will produce an object named ~square~ whose value is the procedure to square a number.
+This is so useful and common an action that scheme provides the following /syntactic sugar/ for naming
 a procedure
 #+NAME: src:square
 #+BEGIN_SRC scheme
@@ -204,7 +206,7 @@ a procedure
 #+END_SRC
 which is simply a shorthand for the previous definition.
 Either way the resulting named procedure is called as ~(square 4)~ for example which should return ~16~;
-for the user ~square~ appears as a new primitive, indistinguishable from those built-in to the =scheme=
+for the user ~square~ appears as a new primitive, indistinguishable from those built-in to the scheme
 implementation which they could then use to build further procedures such as
 #+BEGIN_SRC scheme
   (define (sum-of-squares x y)
@@ -238,7 +240,7 @@ In general procedures must perform tests, for example the absolute value of $x$ 
     0 & \mbox{otherwise}
   \end{cases}
 \end{equation*}
-in =LISP= such a case analysis is implemented using the ~cond~ expression
+in LISP such a case analysis is implemented using the ~cond~ expression
 #+BEGIN_SRC scheme
   (define (abs x)
     (cond ((> x 0) x)
