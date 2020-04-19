@@ -7,6 +7,8 @@ title: SICP Lecture 1A - Introduction
 <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 #+END_EXPORT
 
+/Modified on 2020-04-19 to add notes on scoping including block structuring code./
+
 #+BEGIN_QUOTE
 Computer science is a terrible name for this business - first of all it's not science, it might be
 engineering or it might be art ...
@@ -174,6 +176,46 @@ branches, the nodes at the end of these branches are evaluated and so on until a
 a primitive procedure or value is reached, the values then percolate back up the tree to return a
 value at the root node.
 
+** Conditional expressions and predicates
+
+In general procedures must perform tests, for example the absolute value of $x$ may be defined as
+\begin{equation*}
+  \left| x \right| =
+  \begin{cases}
+    x & x > 0 \\
+    -x & x < 0 \\
+    0 & \mbox{otherwise}
+  \end{cases}
+\end{equation*}
+in LISP such a case analysis is implemented using the ~cond~ expression
+#+BEGIN_SRC scheme
+  (define (abs x)
+    (cond ((> x 0) x)
+          ((< x 0) (- x))
+          (else 0)))
+#+END_SRC
+which follows from the mathematical definition.
+
+The ~cond~ expression consists of a series of /clauses/ made up of a predicate and a /consequent
+expression/.
+Each clause's predicate is evaluated in turn until one returns /true/ when the ~cond~ expression returns
+the value of the corresponding consequent expression, the ~else~ keyword handles the default case.
+
+Whilst ~cond~ handles an arbitrary number of clauses, the ~if~ expression handles the /if-then-else/ case
+where the truth of a single predicate is tested returning either the /consequent/ or the /alternate/
+expression, an alternate definition of ~abs~ is given in listing\nbsp[[src:abs-if]].
+Either one may be implemented in terms of the other, generally a =sceme= implementation would pick one
+and then implement the other.
+
+#+CAPTION: Implementation of ~abs~ using ~if~
+#+NAME: src:abs-if
+#+BEGIN_SRC scheme
+  (define (abs x)
+    (if (< x 0)
+        (- x)
+        x))
+#+END_SRC
+
 ** Abstracting procedures
 <<sec:abstract-proc>>
 
@@ -229,45 +271,14 @@ The basic steps of procedural abstraction are
 3) Create a procedure to control the interaction between modules
 this idea can be applied recursively to each module, simplifying their implementation too.
 
-** Conditional expressions and predicates
+*** Local names and scope
 
-In general procedures must perform tests, for example the absolute value of $x$ may be defined as
-\begin{equation*}
-  \left| x \right| =
-  \begin{cases}
-    x & x > 0 \\
-    -x & x < 0 \\
-    0 & \mbox{otherwise}
-  \end{cases}
-\end{equation*}
-in LISP such a case analysis is implemented using the ~cond~ expression
-#+BEGIN_SRC scheme
-  (define (abs x)
-    (cond ((> x 0) x)
-          ((< x 0) (- x))
-          (else 0)))
-#+END_SRC
-which follows from the mathematical definition.
-
-The ~cond~ expression consists of a series of /clauses/ made up of a predicate and a /consequent
-expression/.
-Each clause's predicate is evaluated in turn until one returns /true/ when the ~cond~ expression returns
-the value of the corresponding consequent expression, the ~else~ keyword handles the default case.
-
-Whilst ~cond~ handles an arbitrary number of clauses, the ~if~ expression handles the /if-then-else/ case
-where the truth of a single predicate is tested returning either the /consequent/ or the /alternate/
-expression, an alternate definition of ~abs~ is given in listing\nbsp[[src:abs-if]].
-Either one may be implemented in terms of the other, generally a =sceme= implementation would pick one
-and then implement the other.
-
-#+CAPTION: Implementation of ~abs~ using ~if~
-#+NAME: src:abs-if
-#+BEGIN_SRC scheme
-  (define (abs x)
-    (if (< x 0)
-        (- x)
-        x))
-#+END_SRC
+In order that a procedure's definition and a user's application do not collide, it should not matter
+what the names of the formal parameters are, ~(define (sum-of-squares a b))~ should be equivalent to
+the above definitions - the parameter names are /local/ to the procedure definition.
+This /binding/ of the variable names exists only in the /scope/ of the procedure definition.
+/Free variables/, that is those not bound by the procedure definition come from the encompassing
+scope.
 
 * Example: Computing square roots
 
@@ -351,6 +362,39 @@ and
   (sqrt 2)
 #+END_SRC
 which should be close to expected values (note that ~good-enough?~ is relatively crude).
+
+** Improved Implementation of ~sqrt~
+
+The above implementation of ~sqrt~ is functional, however it introduces several procedures whose
+names imply general processes - ~good-enough?~, ~grad~, ~improve-guess~ - yet whose definitions are
+entirely specific to ~sqrt~.
+The idea of local names and scope applies also to procedure definitions, an alternative
+implementation of ~sqrt~ exploiting this is given in listing\nbsp[[src:sqrt-block-struct]].
+This approach of using local definitions to isolate procedures from the outside environment is
+called /block structuring/; note also that the internally defined procedures leave ~x~ as a free
+variable, capturing its value from the enclosing scope of ~sqrt-block-struct~ via /lexical scoping/.
+
+#+CAPTION: A block structured implemenation of ~sqrt~.
+#+NAME: src:sqrt-block-struct
+#+BEGIN_SRC scheme :noweb strip-export
+  <<src::square>>
+  (define (sqrt-block-struct x)
+    (define (f guess)
+      (- (square guess) x))
+    (define (grad guess)
+      (* 2 guess))
+    (define (improve-guess guess)
+      (- guess (/ (f guess)
+                  (grad guess))))
+    (define (good-enough? guess)
+      (< (abs (f guess))
+         0.001))
+    (define (sqrt-iter guess)
+      (if (good-enough? guess)
+          guess
+          (sqrt-iter (improve-guess guess))))
+    (sqrt-iter 1.0))
+#+END_SRC
 
 * Footnotes
 

@@ -5,11 +5,15 @@ title: SICP Lecture 1A - Introduction
 
 <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 
+<p>
+<i>Modified on 2020-04-19 to add notes on scoping including block structuring code.</i>
+</p>
+
 <blockquote>
 <p>
-Computer science is a terrible name for this business - first of all it's not science, it might be
+Computer science is a terrible name for this business - first of all it&rsquo;s not science, it might be
 engineering or it might be art &#x2026;
-It's also not really very much about computers. &#x2013; Hal Abelson
+It&rsquo;s also not really very much about computers. &#x2013; Hal Abelson
 </p>
 </blockquote>
 
@@ -26,9 +30,9 @@ contained in lecture notes 1 and 2.
 </p>
 
 <p>
-"Computer science" could be better understood as the <i>study of processes</i> that is "how to",
+&ldquo;Computer science&rdquo; could be better understood as the <i>study of processes</i> that is &ldquo;how to&rdquo;,
 more formally <i>imperative</i>, knowledge.
-This contrasts with "what is", or <i>declarative</i>, knowledge.
+This contrasts with &ldquo;what is&rdquo;, or <i>declarative</i>, knowledge.
 As an example, the statement
 </p>
 \begin{equation*}
@@ -38,7 +42,7 @@ As an example, the statement
   \end{split}
 \end{equation*}
 <p>
-defines what the square root is, whereas Heron of Alexandria's algorithm
+defines what the square root is, whereas Heron of Alexandria&rsquo;s algorithm
 </p>
 \begin{equation*}
   \begin{split}
@@ -59,7 +63,7 @@ SICP studies three approaches managing complexity:
 <ol class="org-ol">
 <li>Procedure and data abstraction
 <ul class="org-ul">
-<li>hiding complexity in "black boxes"</li>
+<li>hiding complexity in &ldquo;black boxes&rdquo;</li>
 </ul></li>
 <li>Conventional interfaces and programming paradigms
 <ul class="org-ul">
@@ -120,7 +124,7 @@ so <code>sqrt</code> could be expressed as finding the fixed point of the functi
   f \left( y_{n+1} \right) = \frac{y_n + x / y_n}{2}
 \end{equation*}
 <p>
-this would fundamentally be the same as Heron's algorithm, although the convergence test would be
+this would fundamentally be the same as Heron&rsquo;s algorithm, although the convergence test would be
 looking for small changes in the result <i>i.e.</i> \(\Delta{}y\rightarrow0\).
 </p>
 
@@ -236,7 +240,7 @@ creates two symbols <code>pi</code> and <code>a</code> whose values are <code>3.
 </p>
 
 <p>
-The above expressions are <i>special forms</i>, in that they don't follow the normal rules of evaluation.
+The above expressions are <i>special forms</i>, in that they don&rsquo;t follow the normal rules of evaluation.
 Consider that if they did the interpreter would first have to evaluate <code>pi</code> before applying the <code>define</code>
 procedure to the values of <code>pi</code> and <code>3.14</code> when the intention of the expression is to associate <code>3.14</code>
 with the symbol <code>pi</code> in the current <i>environment</i> (here the <i>global</i> environment).
@@ -285,9 +289,62 @@ value at the root node.
 </div>
 </div>
 
-<div id="outline-container-orgd51269a" class="outline-3">
-<h3 id="orgd51269a"><span class="section-number-3">3.5</span> Abstracting procedures</h3>
+<div id="outline-container-org09250e7" class="outline-3">
+<h3 id="org09250e7"><span class="section-number-3">3.5</span> Conditional expressions and predicates</h3>
 <div class="outline-text-3" id="text-3-5">
+<p>
+In general procedures must perform tests, for example the absolute value of \(x\) may be defined as
+</p>
+\begin{equation*}
+  \left| x \right| =
+  \begin{cases}
+    x & x > 0 \\
+    -x & x < 0 \\
+    0 & \mbox{otherwise}
+  \end{cases}
+\end{equation*}
+<p>
+in LISP such a case analysis is implemented using the <code>cond</code> expression
+</p>
+<div class="org-src-container">
+<pre class="src src-scheme"><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #bc6ec5;">(</span><span style="color: #bc6ec5; font-weight: bold;">abs</span> x<span style="color: #bc6ec5;">)</span>
+  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">cond</span> <span style="color: #2d9574;">(</span><span style="color: #67b11d;">(</span>&gt; x 0<span style="color: #67b11d;">)</span> x<span style="color: #2d9574;">)</span>
+        <span style="color: #2d9574;">(</span><span style="color: #67b11d;">(</span>&lt; x 0<span style="color: #67b11d;">)</span> <span style="color: #67b11d;">(</span>- x<span style="color: #67b11d;">)</span><span style="color: #2d9574;">)</span>
+        <span style="color: #2d9574;">(</span><span style="color: #4f97d7; font-weight: bold;">else</span> 0<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+<p>
+which follows from the mathematical definition.
+</p>
+
+<p>
+The <code>cond</code> expression consists of a series of <i>clauses</i> made up of a predicate and a <i>consequent
+expression</i>.
+Each clause&rsquo;s predicate is evaluated in turn until one returns <i>true</i> when the <code>cond</code> expression returns
+the value of the corresponding consequent expression, the <code>else</code> keyword handles the default case.
+</p>
+
+<p>
+Whilst <code>cond</code> handles an arbitrary number of clauses, the <code>if</code> expression handles the <i>if-then-else</i> case
+where the truth of a single predicate is tested returning either the <i>consequent</i> or the <i>alternate</i>
+expression, an alternate definition of <code>abs</code> is given in listing&nbsp;<a href="#orgceb8af8">1</a>.
+Either one may be implemented in terms of the other, generally a <code>sceme</code> implementation would pick one
+and then implement the other.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 1: </span>Implementation of <code>abs</code> using <code>if</code></label><pre class="src src-scheme" id="orgceb8af8"><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #bc6ec5;">(</span><span style="color: #bc6ec5; font-weight: bold;">abs</span> x<span style="color: #bc6ec5;">)</span>
+  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #2d9574;">(</span>&lt; x 0<span style="color: #2d9574;">)</span>
+      <span style="color: #2d9574;">(</span>- x<span style="color: #2d9574;">)</span>
+      x<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd51269a" class="outline-3">
+<h3 id="orgd51269a"><span class="section-number-3">3.6</span> Abstracting procedures</h3>
+<div class="outline-text-3" id="text-3-6">
 <p>
 <a id="orgb4a93cc"></a>
 </p>
@@ -295,7 +352,7 @@ value at the root node.
 <p>
 As shown in &sect;<a href="#org0749374">3.3</a> the special form <code>define</code> links a value to a name which may be a
 primitive expression as in the case of <code>pi</code> or a procedure as for <code>a</code>.
-In the example <code>a</code>'s value is the procedure for squaring <code>5</code>, this is very specific and it is likely to
+In the example <code>a</code>&rsquo;s value is the procedure for squaring <code>5</code>, this is very specific and it is likely to
 be more useful to create a general procedure, in scheme this is achieved by the <code>lambda</code> special form.
 A procedure to compute the square of an arbitrary number could be created as follows
 </p>
@@ -360,7 +417,7 @@ suppressing detail through abstraction.
 The basic steps of procedural abstraction are
 </p>
 <ol class="org-ol">
-<li>Identify steps or "modules" in a process</li>
+<li>Identify steps or &ldquo;modules&rdquo; in a process</li>
 <li>Capture modules in a procedural abstraction</li>
 <li>Create a procedure to control the interaction between modules</li>
 </ol>
@@ -368,57 +425,18 @@ The basic steps of procedural abstraction are
 this idea can be applied recursively to each module, simplifying their implementation too.
 </p>
 </div>
-</div>
 
-<div id="outline-container-org09250e7" class="outline-3">
-<h3 id="org09250e7"><span class="section-number-3">3.6</span> Conditional expressions and predicates</h3>
-<div class="outline-text-3" id="text-3-6">
+<div id="outline-container-org5172268" class="outline-4">
+<h4 id="org5172268"><span class="section-number-4">3.6.1</span> Local names and scope</h4>
+<div class="outline-text-4" id="text-3-6-1">
 <p>
-In general procedures must perform tests, for example the absolute value of \(x\) may be defined as
+In order that a procedure&rsquo;s definition and a user&rsquo;s application do not collide, it should not matter
+what the names of the formal parameters are, <code>(define (sum-of-squares a b))</code> should be equivalent to
+the above definitions - the parameter names are <i>local</i> to the procedure definition.
+This <i>binding</i> of the variable names exists only in the <i>scope</i> of the procedure definition.
+<i>Free variables</i>, that is those not bound by the procedure definition come from the encompassing
+scope.
 </p>
-\begin{equation*}
-  \left| x \right| =
-  \begin{cases}
-    x & x > 0 \\
-    -x & x < 0 \\
-    0 & \mbox{otherwise}
-  \end{cases}
-\end{equation*}
-<p>
-in LISP such a case analysis is implemented using the <code>cond</code> expression
-</p>
-<div class="org-src-container">
-<pre class="src src-scheme"><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #bc6ec5;">(</span><span style="color: #bc6ec5; font-weight: bold;">abs</span> x<span style="color: #bc6ec5;">)</span>
-  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">cond</span> <span style="color: #2d9574;">(</span><span style="color: #67b11d;">(</span>&gt; x 0<span style="color: #67b11d;">)</span> x<span style="color: #2d9574;">)</span>
-        <span style="color: #2d9574;">(</span><span style="color: #67b11d;">(</span>&lt; x 0<span style="color: #67b11d;">)</span> <span style="color: #67b11d;">(</span>- x<span style="color: #67b11d;">)</span><span style="color: #2d9574;">)</span>
-        <span style="color: #2d9574;">(</span><span style="color: #4f97d7; font-weight: bold;">else</span> 0<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-</pre>
-</div>
-<p>
-which follows from the mathematical definition.
-</p>
-
-<p>
-The <code>cond</code> expression consists of a series of <i>clauses</i> made up of a predicate and a <i>consequent
-expression</i>.
-Each clause's predicate is evaluated in turn until one returns <i>true</i> when the <code>cond</code> expression returns
-the value of the corresponding consequent expression, the <code>else</code> keyword handles the default case.
-</p>
-
-<p>
-Whilst <code>cond</code> handles an arbitrary number of clauses, the <code>if</code> expression handles the <i>if-then-else</i> case
-where the truth of a single predicate is tested returning either the <i>consequent</i> or the <i>alternate</i>
-expression, an alternate definition of <code>abs</code> is given in listing&nbsp;<a href="#orgceb8af8">1</a>.
-Either one may be implemented in terms of the other, generally a <code>sceme</code> implementation would pick one
-and then implement the other.
-</p>
-
-<div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 1: </span>Implementation of <code>abs</code> using <code>if</code></label><pre class="src src-scheme" id="orgceb8af8"><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #bc6ec5;">(</span><span style="color: #bc6ec5; font-weight: bold;">abs</span> x<span style="color: #bc6ec5;">)</span>
-  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #2d9574;">(</span>&lt; x 0<span style="color: #2d9574;">)</span>
-      <span style="color: #2d9574;">(</span>- x<span style="color: #2d9574;">)</span>
-      x<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-</pre>
 </div>
 </div>
 </div>
@@ -428,8 +446,8 @@ and then implement the other.
 <h2 id="orgbd6260f"><span class="section-number-2">4</span> Example: Computing square roots</h2>
 <div class="outline-text-2" id="text-4">
 <p>
-As pointed out in &sect;<a href="#org4896cfc">2</a> Heron of Alexandria's algorithm for computing square roots can be
-expressed as finding the fixed point of a function, it is in fact an application of Newton's method
+As pointed out in &sect;<a href="#org4896cfc">2</a> Heron of Alexandria&rsquo;s algorithm for computing square roots can be
+expressed as finding the fixed point of a function, it is in fact an application of Newton&rsquo;s method
 </p>
 \begin{equation*}
   \begin{split}
@@ -444,7 +462,7 @@ to the function \(f\left( y \right) = y^2 - x\).
 </p>
 
 <p>
-Applying the process of procedural abstraction outlined above, Newton's method has three major
+Applying the process of procedural abstraction outlined above, Newton&rsquo;s method has three major
 components:
 </p>
 <ol class="org-ol">
@@ -533,6 +551,43 @@ and
 <p>
 which should be close to expected values (note that <code>good-enough?</code> is relatively crude).
 </p>
+</div>
+
+<div id="outline-container-orgb240ee9" class="outline-3">
+<h3 id="orgb240ee9"><span class="section-number-3">4.1</span> Improved Implementation of <code>sqrt</code></h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+The above implementation of <code>sqrt</code> is functional, however it introduces several procedures whose
+names imply general processes - <code>good-enough?</code>, <code>grad</code>, <code>improve-guess</code> - yet whose definitions are
+entirely specific to <code>sqrt</code>.
+The idea of local names and scope applies also to procedure definitions, an alternative
+implementation of <code>sqrt</code> exploiting this is given in listing&nbsp;<a href="#org1615530">5</a>.
+This approach of using local definitions to isolate procedures from the outside environment is
+called <i>block structuring</i>; note also that the internally defined procedures leave <code>x</code> as a free
+variable, capturing its value from the enclosing scope of <code>sqrt-block-struct</code> via <i>lexical scoping</i>.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 5: </span>A block structured implemenation of <code>sqrt</code>.</label><pre class="src src-scheme" id="org1615530">
+<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #bc6ec5;">(</span><span style="color: #bc6ec5; font-weight: bold;">sqrt-block-struct</span> x<span style="color: #bc6ec5;">)</span>
+  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #2d9574;">(</span><span style="color: #bc6ec5; font-weight: bold;">f</span> guess<span style="color: #2d9574;">)</span>
+    <span style="color: #2d9574;">(</span>- <span style="color: #67b11d;">(</span>square guess<span style="color: #67b11d;">)</span> x<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #2d9574;">(</span><span style="color: #bc6ec5; font-weight: bold;">grad</span> guess<span style="color: #2d9574;">)</span>
+    <span style="color: #2d9574;">(</span>* 2 guess<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #2d9574;">(</span><span style="color: #bc6ec5; font-weight: bold;">improve-guess</span> guess<span style="color: #2d9574;">)</span>
+    <span style="color: #2d9574;">(</span>- guess <span style="color: #67b11d;">(</span>/ <span style="color: #b1951d;">(</span>f guess<span style="color: #b1951d;">)</span>
+                <span style="color: #b1951d;">(</span>grad guess<span style="color: #b1951d;">)</span><span style="color: #67b11d;">)</span><span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #2d9574;">(</span><span style="color: #bc6ec5; font-weight: bold;">good-enough?</span> guess<span style="color: #2d9574;">)</span>
+    <span style="color: #2d9574;">(</span>&lt; <span style="color: #67b11d;">(</span>abs <span style="color: #b1951d;">(</span>f guess<span style="color: #b1951d;">)</span><span style="color: #67b11d;">)</span>
+       0.001<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">define</span> <span style="color: #2d9574;">(</span><span style="color: #bc6ec5; font-weight: bold;">sqrt-iter</span> guess<span style="color: #2d9574;">)</span>
+    <span style="color: #2d9574;">(</span><span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #67b11d;">(</span>good-enough? guess<span style="color: #67b11d;">)</span>
+        guess
+        <span style="color: #67b11d;">(</span>sqrt-iter <span style="color: #b1951d;">(</span>improve-guess guess<span style="color: #b1951d;">)</span><span style="color: #67b11d;">)</span><span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span>
+  <span style="color: #bc6ec5;">(</span>sqrt-iter 1.0<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+</div>
 </div>
 </div>
 <div id="footnotes">
