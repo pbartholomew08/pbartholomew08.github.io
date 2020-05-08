@@ -1,0 +1,10 @@
+#+BEGIN_EXPORT html
+---
+layout: post
+title: SICP Lecture 1B - Procedures and Processes; The Substitution Model
+---
+
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+#+END_EXPORT
+
+* Introduction
