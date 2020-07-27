@@ -115,37 +115,34 @@ Interestingly while these operations are generally treated as /primitive/, they 
 <<sec:lisp-combinations>>
 
 LISP symbols are combined using parentheses to form a /combination/ that is evaluated following
-prefix-notation rules, /e.g./
-#+BEGIN_SRC scheme
-  (+ 3 17.4 5)
-#+END_SRC
-is a combination comprising an /operator/ whose value is a procedure followed by a list of operands.
+prefix-notation rules, /e.g./ ~(+ 3 17.4 5)~ is a combination comprising an /operator/ whose value is a
+procedure followed by a list of operands.
 /Evaluating/ a combination returns a /value/ by applying the operator procedure to the operand values
 /i.e./ the operands are evaluated before evaluating the combination, allowing for /nested/ combinations
-/e.g./
+such as
 #+BEGIN_SRC scheme
   (+ (* 2 3)
      4)
 #+END_SRC
-is evaluated as
-#+BEGIN_SRC scheme
-  (+ 6 4)
-#+END_SRC
-returning ~10~ as its value.
+which is evaluated as ~(+ 6 4)~ returning ~10~ as its value.
 
 ** Abstracting in scheme
 <<sec:scheme-abstractions>>
 
 It would not be very useful to have to write out procedures in full whenever they are required or
 have mysterious numbers floating around, to resolve this abstraction is used to generate a /name/
-whose /value/ is the object, for instance
+whose /value/ is the object, for instance the code in listing\nbsp[[src:example-definitions.scm]] creates two
+symbols ~pi~ and ~a~ whose values are ~3.14~ and the procedure ~(* 5 5)~, respectively.
+
+#+CAPTION: Example of defining new symbols
+#+NAME: src:example-definitions.scm
 #+BEGIN_SRC scheme
   (define pi 3.14)
   (define a (* 5 5))
 #+END_SRC
-creates two symbols ~pi~ and ~a~ whose values are ~3.14~ and the procedure ~(* 5 5)~, respectively.
 
-The above expressions are /special forms/, in that they don't follow the normal rules of evaluation.
+The expressions in listing\nbsp[[src:example-definitions.scm]] are /special forms/, in that they don't follow
+the normal rules of evaluation.
 Consider that if they did the interpreter would first have to evaluate ~pi~ before applying the ~define~
 procedure to the values of ~pi~ and ~3.14~ when the intention of the expression is to associate ~3.14~
 with the symbol ~pi~ in the current /environment/ (here the /global/ environment).
@@ -187,14 +184,17 @@ In general procedures must perform tests, for example the absolute value of $x$ 
     0 & \mbox{otherwise}
   \end{cases}
 \end{equation*}
-in LISP such a case analysis is implemented using the ~cond~ expression
+in LISP such a case analysis is performed by the ~cond~ expression, listing\nbsp[[src:abs.scm]] shows an
+example implementation of $\left| x \right|$ which follows from the mathematical definition.
+
+#+CAPTION: Example implementation of $\left| x \right|$
+#+NAME: src:abs.scm
 #+BEGIN_SRC scheme
   (define (abs x)
     (cond ((> x 0) x)
           ((< x 0) (- x))
           (else 0)))
 #+END_SRC
-which follows from the mathematical definition.
 
 The ~cond~ expression consists of a series of /clauses/ made up of a predicate and a /consequent
 expression/.
@@ -203,12 +203,12 @@ the value of the corresponding consequent expression, the ~else~ keyword handles
 
 Whilst ~cond~ handles an arbitrary number of clauses, the ~if~ expression handles the /if-then-else/ case
 where the truth of a single predicate is tested returning either the /consequent/ or the /alternate/
-expression, an alternate definition of ~abs~ is given in listing\nbsp[[src:abs-if]].
-Either one may be implemented in terms of the other, generally a =sceme= implementation would pick one
+expression, an alternate definition of ~abs~ is given in listing\nbsp[[src:abs-if.scm]].
+Either one may be implemented in terms of the other, generally a =scheme= implementation would pick one
 and then implement the other.
 
-#+CAPTION: Implementation of ~abs~ using ~if~
-#+NAME: src:abs-if
+#+CAPTION: Implementation of $\left| x \right|$ using ~if~
+#+NAME: src:abs-if.scm
 #+BEGIN_SRC scheme
   (define (abs x)
     (if (< x 0)
@@ -239,31 +239,40 @@ procedure as follows
                    (* x x)))
 #+END_SRC
 which will produce an object named ~square~ whose value is the procedure to square a number.
-This is so useful and common an action that scheme provides the following /syntactic sugar/ for naming
-a procedure
-#+NAME: src:square
+This is so useful and common an action that scheme provides /syntactic sugar/ for naming a procedure,
+demonstrated in listing\nbsp[[src:square.scm]] which is simply a shorthand for the previous definition.
+
+#+CAPTION: Defining the ~square~ procedure
+#+NAME: src:square.scm
 #+BEGIN_SRC scheme
   (define (square x)
     (* x x))
 #+END_SRC
-which is simply a shorthand for the previous definition.
+
 Either way the resulting named procedure is called as ~(square 4)~ for example which should return ~16~;
 for the user ~square~ appears as a new primitive, indistinguishable from those built-in to the scheme
-implementation which they could then use to build further procedures such as
+implementation which they could then use to build further procedures such as computing the sum of
+squares shown in listing\nbsp[[src:sos.scm]].
+Clearly this is better than simply writing out the full algebraic expression as in
+listing\nbsp[[src:sos2.scm]] as in the former we have captured the process of squaring a number in the
+~square~ procedure, introducing modularity allowing for reuse of ~square~ elsewhere and increasing
+readability by suppressing detail through abstraction.
+
+#+CAPTION: Defining the ~sum-of-squares~ procedure
+#+NAME: src:sos.scm
 #+BEGIN_SRC scheme
   (define (sum-of-squares x y)
     (+ (square x)
        (square y)))
 #+END_SRC
-This is better than simply writing out the full algebraic expression
+
+#+CAPTION: Defining the ~sum-of-squares~ procedure without abstractions
+#+NAME: src:sos2.scm
 #+BEGIN_SRC scheme
   (define (sum-of-squares x y)
     (+ (* x x)
        (* y y)))
 #+END_SRC
-as in the former we have captured the process of squaring a number in the ~square~ procedure,
-introducing modularity allowing for reuse of ~square~ elsewhere and increasing readability by
-suppressing detail through abstraction.
 
 The basic steps of procedural abstraction are
 1) Identify steps or "modules" in a process
@@ -399,3 +408,10 @@ variable, capturing its value from the enclosing scope of ~sqrt-block-struct~ vi
 * Footnotes
 
 [fn:1] It can be shown that using ~1.0~ as an initial guess will converge to the solution.
+
+* Code dump                                                        :noexport:
+
+#+BEGIN_SRC scheme :noweb tangle :tangle ../../../../src/lisp/sicp/sicp-1a.scm
+  <<src:square.scm>>
+  <<src:sos.scm>>
+#+END_SRC
