@@ -22,18 +22,12 @@ The substitution model evaluates a combination as follows:
    - Evaluate the resulting new body
 this process is recursive and continues until primitives which can be evaluated directly are
 reached.
-As an example evaluating ~(sos 3 4)~ using the substitution model would play out like:
+As an example evaluating ~(sum-of-squares 3 4)~ using the substitution model would play out like:
 
 #+CAPTION: Evaluating a combination using the substitution model
 #+NAME: src:subst-model-example
 #+BEGIN_SRC scheme
-  (define (square x)
-    (* x x))
-  (define (sos x y)
-    (+ (square x)
-       (square y)))
-
-  (sos 3 4)
+  (sum-of-squares 3 4)
   (+ (square 3) (square 4))
   (+ (square 3) (* 4 4))
   (+ (square 3) 16)
@@ -50,7 +44,7 @@ Alternatively /normal-order/ evaluation only evaluates operands when their value
 #+CAPTION: Normal-order evaluation example
 #+NAME: src:subs-model-example-normal-order
 #+BEGIN_SRC scheme
-  (sos 3 4)
+  (sum-of-squares 3 4)
   (+ (square 3) (square 4))
   (+ (square 3) (* 4 4))
   (+ (* 3 3) (* 4 4))
@@ -83,14 +77,20 @@ demonstrate this are given below.
 ** Example: P\eacute{}ano arithmetic
 
 Given a way to increment and decrement a number by one (in scheme the ~1+~ and ~1-~ operators
-respectively) addition of two numbers can be defined as
+respectively) addition of two numbers can be defined as in listing\nbsp[[src:peano+.scm]], yielding the
+process shown in listing\nbsp[[src:peano+-example.scm]], treating the ~1+~ and ~1-~ operators as primitive.
+
+#+CAPTION: Implementing addition in P\eacute{}ano arithmetic
+#+NAME: src:peano+.scm
 #+BEGIN_SRC scheme
   (define (peano+ x y)
     (if (= x 0)
         y
         (peano+ (1- x) (1+ y))))
 #+END_SRC
-giving, /e.g./
+
+#+CAPTION: Evaluating $3 + 4$ with P\eacute{}ano arithmetic
+#+NAME: src:peano+-example.scm
 #+BEGIN_SRC scheme
   (peano+ 3 4)
   (peano+ (1- 3) (1+ 4))
@@ -101,17 +101,23 @@ giving, /e.g./
   (peano+ 0 7)
   7
 #+END_SRC
-treating the ~1+~ and ~1-~ operators as primitive.
 
-A similar, but very subtly different, implementation of addition is given below
+A similar, but very subtly different, implementation of addition is given in
+listing\nbsp[[src:peano+-2.scm]].
+As can be seen ~peano+-2~ is nearly identical to the former definition, however the process it evolves
+in listing\nbsp[[src:peano+-2-example.scm]] is significantly different.
+
+#+CAPTION: Alternative implemenation of addition in P\eacute{}ano arithmetic
+#+NAME: src:peano+-2.scm
 #+BEGIN_SRC scheme
   (define (peano+-2 x y)
     (if (= x 0)
         y
         (1+ (peano+-2 (1- x) y))))
 #+END_SRC
-as can be seen it is nearly identical to the former definition, however the process it evolves is
-significantly different:
+
+#+CAPTION: Evaluating $3 + 4$ with alternative P\eacute{}ano arithmetic implementaion
+#+NAME: src:peano+-2-example.scm
 #+BEGIN_SRC scheme
   (peano+-2 3 4)
   (1+ (peano+-2 2 4))
@@ -145,7 +151,15 @@ A classic example of recursive procedures and processes are the Fibonacci number
     Fib\left(n - 2\right) + Fib\left(n - 1\right) & \mbox{otherwise}
   \end{cases}
 \end{equation*}
-which translates almost directly into lisp
+listing\nbsp[[src:fib.scm]] translates this almost directly into lisp.
+The process this evolves is /tree recursive/ - as can be seen ~(fib n)~ requires evaluating ~(fib (- n
+1))~ and ~(fib (-n 2))~, ~(fib (- n 2))~ requires evaluating ~(fib (- n 1))~ and so on - resulting in an
+exponential growth in work (in fact evaluating ~(fib n)~ requires
+$\mathcal{O}\left(Fib\left(n\right)\right)$ work) - the memory requirements can be determined by
+examining the length of the longest branch, here memory is $\mathcal{O}\left(n\right)$.
+
+#+CAPTION: Recursive implementation of $Fib\left(n\right)$
+#+NAME: src:fib.scm
 #+BEGIN_SRC scheme
   (define (fib n)
     (if (< n 2)
@@ -153,11 +167,6 @@ which translates almost directly into lisp
         (+ (fib (- n 1)
                 (- n 2)))))
 #+END_SRC
-The process this evolves is /tree recursive/ - as can be seen ~(fib n)~ requires evaluating ~(fib (- n
-1))~ and ~(fib (-n 2))~, ~(fib (- n 2))~ requires evaluating ~(fib (- n 1))~ and so on - resulting in an
-exponential growth in work (in fact evaluating ~(fib n)~ requires
-$\mathcal{O}\left(Fib\left(n\right)\right)$ work) - the memory requirements can be determined by
-examining the length of the longest branch, here memory is $\mathcal{O}\left(n\right)$.
 
 *** Exercise: An iterative Fibonacci process
 
@@ -165,8 +174,10 @@ An iterative Fibonacci process would evaluate ~(fib n)~ in $\mathcal{O}\left(1\r
 
 For the general case the new value can be computed from the two previous values, so an iterative
 process requires storing these two pieces of information in addition to the counter to determine
-when to stop, my implementation is given in listing\nbsp[[src:fib-iter]].
-#+NAME: src:fib-iter
+when to stop, my implementation is given in listing\nbsp[[src:fib-iter.scm]].
+
+#+CAPTION: Iterative implementation of $Fib\left(n\right)$
+#+NAME: src:fib-iter.scm
 #+BEGIN_SRC scheme
   (define (fib n)
     (define (fib-iter ctr f1 f2)
@@ -182,7 +193,11 @@ when to stop, my implementation is given in listing\nbsp[[src:fib-iter]].
            (fib-iter 1 1 0))))
 #+END_SRC
 
-The textbook implementation is more elegant, handling the base cases automatically
+The textbook implementation in listing\nbsp[[src:fib-iter-textbook.scm]] is more elegant, handling the base
+cases automatically.
+
+#+CAPTION: Textbook iterative implementation of $Fib\left(n\right)$
+#+NAME: src:fib-iter-textbook.scm
 #+BEGIN_SRC scheme
   (define (fib n)
     (define (fib-iter ctr f1 f2)

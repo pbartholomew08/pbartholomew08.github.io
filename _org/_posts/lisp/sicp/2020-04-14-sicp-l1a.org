@@ -8,6 +8,7 @@ title: SICP Lecture 1A - Introduction
 #+END_EXPORT
 
 /Modified on 2020-04-19 to add notes on scoping including block structuring code./
+/Modified on 2020-07-27 to tidy the text./
 
 #+BEGIN_QUOTE
 Computer science is a terrible name for this business - first of all it's not science, it might be
@@ -30,15 +31,15 @@ This contrasts with "what is", or /declarative/, knowledge.
 As an example, the statement
 \begin{equation*}
   \begin{split}
-    \sqrt{x}\ \mbox{is the } y\ \mbox{such that} \\
-    y^2 = x,\ y \geq 0
+    \sqrt{x}\ \mbox{is the } y\ \mbox{such that}& \\
+    y^2 &= x,\ y \geq 0
   \end{split}
 \end{equation*}
 defines what the square root is, whereas Heron of Alexandria's algorithm
 \begin{equation*}
   \begin{split}
-    \mbox{Given an initial guess } y_0\\
-    y_{n+1} = \frac{y_n + x/y_n}{2}\ \mbox{while } \left|y^2_n - x\right| > \varepsilon
+    \mbox{Given an initial guess } y_0:&\\
+    y_{n+1} &= \frac{y_n + x/y_n}{2}\ \mbox{while } \left|y^2_n - x\right| > \varepsilon
   \end{split}
 \end{equation*}
 is a /procedure/ for how to compute (or estimate) the square root.
@@ -295,8 +296,8 @@ As pointed out in \S[[sec:black-boxes]] Heron of Alexandria's algorithm for comp
 expressed as finding the fixed point of a function, it is in fact an application of Newton's method
 \begin{equation*}
   \begin{split}
-    f \left( y_{n+1} \right) &= f \left( y_n \right) + \left. \Delta y \frac{\partial f}{\partial y}
-    \right|_n = 0 \\
+    f \left( y_{n+1} \right) &= f \left( y_n \right) + \left. \frac{\partial f}{\partial y}
+    \right|_n \Delta y = 0 \\
     \Rightarrow y_{n+1} &= y_n - \left. \frac{\partial f}{\partial y} \right|^{-1}_n f \left( y_n
     \right)
   \end{split}
