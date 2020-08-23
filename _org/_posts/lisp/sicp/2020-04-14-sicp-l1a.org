@@ -415,4 +415,5 @@ variable, capturing its value from the enclosing scope of ~sqrt-block-struct~ vi
 #+BEGIN_SRC scheme :noweb tangle :tangle ../../../../src/lisp/sicp/sicp-1a.scm
   <<src:square.scm>>
   <<src:sos.scm>>
+  <<src:sqrt-block-struct>>
 #+END_SRC
