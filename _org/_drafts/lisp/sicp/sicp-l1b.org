@@ -133,10 +133,11 @@ Both approaches follow a common principle of reducing a problem to a simpler, ba
 the answer is known, here $x\rightarrow0$.
 Each implementation also involves a number of steps proportional to the input ~x~ performing
 $\mathcal{O}\left(x\right)$ work.
-The major difference is the work deferred by ~peano+-2~ building up a string of increments to be
+The major difference is the work deferred by ~peano+-2~ building up a series of increments to be
 performed once the base case is reached, the width of each line is in some sense the amount of stuff
-the computer must remember, ~peano+~ is an /iteration/ requiring constant memory $\mathcal{O}\left(1\right)$ whilst
-~peano+-2~ has $\mathcal{O}\left(x\right)$ memory requirements and is thus a (linear) /recursion/.[fn:1]
+the computer must remember, ~peano+~ is an /iteration/ requiring constant memory
+$\mathcal{O}\left(1\right)$ whilst ~peano+-2~ has $\mathcal{O}\left(x\right)$ memory requirements and
+is thus a (linear) /recursion/.[fn:1]
 A key difference is that an iteration has /explicit state/ stored in its variables - it can be stopped
 and restarted as if nothing happened - whereas recursions store /implicit state/ in the process.
 
@@ -209,8 +210,6 @@ cases automatically.
 
 Whilst the tree-recursive process is computationally inefficient they are useful due to the ease of
 implementation, the iterative process required effort up front to develop.[fn:2]
-
-* Problem set 1
 
 * Footnotes
 
