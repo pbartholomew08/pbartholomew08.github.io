@@ -25,7 +25,7 @@ gitlab_username:  pbartholomew08
 
 # Build settings
 markdown: kramdown
-theme: minima
+theme: jekyll-theme-merlot
 plugins:
   - jekyll-feed
 
