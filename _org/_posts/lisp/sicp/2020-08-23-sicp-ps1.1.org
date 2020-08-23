@@ -1,0 +1,250 @@
+#+BEGIN_EXPORT html
+---
+layout: post
+title: SICP Problem Set 1.1
+---
+
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+#+END_EXPORT
+
+/Problems from SICP \S1.1/
+
+* Exercise 1.1
+
+What is the result of the following expressions?
+
+#+BEGIN_SRC scheme
+  10                 ;; 10
+  (+ 5 3 4)          ;; 12
+  (- 9 1)            ;;  8
+  (/ 6 2)            ;;  3
+  (+ (* 2 4)
+     (- 4 6))        ;;  6
+  (define a 3)       ;;  A
+  (define b (+ a 1)) ;;  B
+  (+ a b (* a b))    ;; 19
+  (= a b)            ;; #f
+  (if (and (> b a)
+           (< b (* a b)))
+      b
+      a)             ;;  4
+  (cond ((= a 4)
+         6)
+        ((= b 4)
+         (+ 6 7 a))
+        (else
+         25))        ;; 16
+  (+ 2
+     (if (> b a)
+         b
+         a))         ;;  6
+  (* (cond ((> a b)
+            a)
+           ((< a b)
+            b)
+           (else
+            -1))
+     (+ a 1))        ;; 16
+#+END_SRC
+
+* Exercise 1.2
+
+Translate the expression
+\begin{equation}
+  \frac{5 + 4 + \left( 2 - \left( 3 - \left( 6 + 4/5 \right) \right) \right)}{3 \left( 6 - 2 \right)
+    \left( 2 - 7 \right)}
+\end{equation}
+into prefix form.
+
+#+BEGIN_SRC scheme
+  (/ (+ 5
+        4
+        (- 2 (- 3 (+ 6 (/ 4 5)))))
+     (* 3
+        (- 6 2)
+        (- 2 7)))
+#+END_SRC
+
+* Exercise 1.3
+
+Define a procedure that takes three numbers as arguments and returns the sum of squares of the
+larger two.
+
+#+BEGIN_SRC scheme
+  (define (ex1.3 a b c)
+    (cond
+     ((and (>= a b)
+           (>= b c))
+      (sum-of-squares a b))
+     ((and (>= b c)
+           (>= c a))
+      (sum-of-squares b c))
+     (else
+      (sum-of-squares c a))))
+#+END_SRC
+
+* Exercise 1.4
+
+Describe the behaviour of
+
+#+BEGIN_SRC scheme
+  (define (a-plus-abs-b a b)
+    ((if (> b 0)
+         +
+         -)
+     a
+     b))
+#+END_SRC
+
+The sign of ~b~ is checked by the ~if~ expression, returning a ~+~ or ~-~ for the operand of the body of
+~a-plus-abs-b~ as appropriate.
+
+* Exercise 1.5
+
+Given
+
+#+BEGIN_SRC scheme
+  (define (p)
+    (p))
+
+  (define (test x y)
+    (if (= x 0)
+        0
+        y))
+#+END_SRC
+
+what happens when evaluating ~(test 0 (p))~ using /applicative-order/ evaluation?
+
+The arguments are evaluated first resulting in an infinite loop of evaluating ~(p)~.
+
+Using /normal-order/ evaluation the operands are not evaluated until required, as a result ~(p)~ is
+never evaluated and the expression returns ~0~.
+
+* Exercise 1.6
+
+Defining ~if~ as a procedure, rather than a special form, using ~cond~
+
+#+BEGIN_SRC scheme
+  (define (new-if predicate then-clause else-clause)
+    (cond (predicate then-clause)
+          (else else-clause)))
+#+END_SRC
+
+What happens when ~sqrt-iter~ is rewritten using ~new-if~?
+
+As =scheme= uses /applicative-order/ evaluation the operands of ~new-if~ are evaluated /before/ applying the
+~new-if~ procedure.
+This will result in an infinite loop as ~sqrt-iter~ is itself an operand of ~new-if~ within the new
+definition of ~sqrt-iter~.
+
+* Exercise 1.7
+
+Computing the ~sqrt~ of small numbers with the given implementation of ~good-enough?~ will result in
+significant errors as the difference between ~x~ and ~(square guess)~ can then be large relative to ~x~
+whilst still satisfying the absolute tolerance test, /e.g./ ~(sqrt-block-struct 0.0001)~ evaluates to
+~0.032~ a $>200%$ error.
+With large numbers however the test may never be satisfied, resulting in an infinite loop, as an
+example ~(sqrt-block-struct 12345678910111213141516)~ never returns.
+This occurs as ~guess~ approaches the solution ~improve-guess~ tends to an artificial fixed point which
+does not satisfy the convergence test.
+The artificial fixed point is due to finite precision
+\begin{equation}
+  \begin{split}
+    y &= y \left( 1 + \varepsilon \right),\ \varepsilon \rightarrow 0 \\
+    \Rightarrow y_{n+1} &= \frac{x/y_n + y_n}{2} \\
+    &= \frac{y_n\left( 1 + \varepsilon \right) + y_n}{2} \\
+    &= y_n ,\ \left| y^2_n - x \right| > tol \ .
+  \end{split}
+\end{equation}
+
+As an alternative we can stop when the change in guess is a very small fraction of the previous
+guess.
+A ~sqrt~ procedure using this approach is implemented in listing\nbsp[[src:better-sqrt]].
+
+#+CAPTION: A better ~sqrt~ procedure using change in guess.
+#+NAME: src:better-sqrt
+#+BEGIN_SRC scheme
+  (define (sqrt x)
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; sqrt iteration
+    (define (sqrt-iter guess prev-guess)
+
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;; Helper procedures
+      (define (improve-guess)
+        (/ (+ (/ x guess)
+              guess)
+           2))
+      (define (good-enough?)
+        (<= (abs (- guess prev-guess))
+           (* 0.001 guess)))
+
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;; Procedure body
+      (if (good-enough?)
+          guess
+          (sqrt-iter (improve-guess) guess)))
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; Set the iteration going
+    (if (= x 0)
+        0 ;; Special case when x is zero
+        (sqrt-iter 1.0 1.1)))
+#+END_SRC
+
+#+RESULTS: src:better-sqrt
+: #<unspecified>
+
+#+CAPTION: Testing the improved ~sqrt~ procedure on a small number.
+#+NAME: src:better-sqrt-smalltest
+#+BEGIN_SRC scheme :noweb no-export :exports both
+  <<src:better-sqrt>>
+  (sqrt 0.0001)
+#+END_SRC
+
+#+CAPTION: Testing the improved ~sqrt~ procedure on a large number.
+#+NAME: src:better-sqrt-largetest
+#+BEGIN_SRC scheme :noweb no-export :exports both
+  <<src:better-sqrt>>
+  (sqrt 12345678910111213141516)
+#+END_SRC
+
+#+CAPTION: Testing the improved ~sqrt~ procedure on zero.
+#+NAME: src:better-sqrt-zerotest
+#+BEGIN_SRC scheme :noweb no-export :exports both
+  <<src:better-sqrt>>
+  (sqrt 0)
+#+END_SRC
+
+* Exercise 1.8
+
+Applying Newton's method to calculate the cube root of $x$ yields an update of the form
+\begin{equation}
+  y_{n+1} = \frac{x/y^2_n + 2y_n}{3} \ .
+\end{equation}
+
+A cube root procedure can be implemented analogously to the ~sqrt~ procedure as
+#+BEGIN_SRC scheme
+  (define (cube-root x)
+    (define (try guess prev-guess absx)
+      (define (good-enough?)
+        (< (abs (- guess prev-guess))
+           (* 0.001 guess)))
+      (define (improve)
+        (/ (+ (/ absx (* guess guess))
+              (* 2 guess))
+           3))
+      (if (good-enough?)
+          guess
+          (try (improve) guess absx)))
+    ((if (> x 0)
+         +
+         -)
+     (try 1.0 1.1 (abs x))))
+#+END_SRC
+
+The above implementation use of the fact that $x^3 = sign\left(x\right)\left|x\right|^3$ to avoid
+potential numerical issues as the value of ~guess~ crosses zero.
+
+
