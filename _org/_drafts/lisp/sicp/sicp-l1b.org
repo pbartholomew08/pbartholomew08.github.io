@@ -211,6 +211,43 @@ cases automatically.
 Whilst the tree-recursive process is computationally inefficient they are useful due to the ease of
 implementation, the iterative process required effort up front to develop.[fn:2]
 
+** Designing recursive algorithms 
+
+The above examples are all recursively-defined algorithms, giving rise to either recursive or
+iterative processes, their designs all follow a similar pattern
+1) /Wishful thinking/ - assume that a method exists for solving a smaller/simpler version of the
+   problem.
+2) /Decomposing the problem/ - take the problem and split it into a combination of simple operations
+   and the solution to the smaller problem. This requires some ingenuity.
+3) /Identifying the ``smallest'' problem/ - this problem is either non-decomposable or sufficiently
+   small that is solved directly.
+This results in a program design that tests the input, applying either the /recursive case/ or the
+/base case/ when the smallest input is reached.
+
+*** Example: Factorial
+
+Another well known recursive algorithm is calculating the factorial
+\begin{equation}
+  n! =
+  \begin{cases}
+    n \left( n - 1 \right)! & n > 1 \\
+    1 & \mbox{otherwise}
+  \end{cases}
+\end{equation}
+as can be seen it consists of a test resulting in either the application of a simple procedure
+(multiplication) to a smaller version of the problem $\left( n - 1 \right)!$, or a base case which
+immediately returns its solution /i.e./ $1$.
+
+Defining a recursive procedure follows relatively trivially
+#+BEGIN_SRC scheme
+  (define (fact n)
+    (if (> n 1)
+        (* n (fact (- n 1)))
+        1))
+#+END_SRC
+
+*** Formal proofs
+
 * Footnotes
 
 [fn:2] Could a /sufficiently smart/ compiler transform an easy to specify tree-recursive procedure
