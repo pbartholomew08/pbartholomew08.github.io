@@ -22,7 +22,9 @@ The substitution model evaluates a combination as follows:
    - Evaluate the resulting new body
 this process is recursive and continues until primitives which can be evaluated directly are
 reached.
-As an example evaluating ~(sum-of-squares 3 4)~ using the substitution model would play out like:
+As an example evaluating ~(sum-of-squares 3 4)~ using the substitution model would play out as in
+listing\nbsp[[src:subst-model-example]], note: the order of operand evaluation is arbitrary and is /not
+defined by the scheme standard/.
 
 #+CAPTION: Evaluating a combination using the substitution model
 #+NAME: src:subst-model-example
@@ -38,9 +40,12 @@ As an example evaluating ~(sum-of-squares 3 4)~ using the substitution model wou
 
 ** Normal-order evaluation
 
-The example above used /applicative-order/ evaluation, evaluating the operator and operands
-immediately before applying the procedure - this is the approach used by =scheme=.
-Alternatively /normal-order/ evaluation only evaluates operands when their values are needed, /e.g./
+The example in listing\nbsp[[src:subst-model-example]] used /applicative-order/ evaluation, evaluating the
+operator and operands immediately before applying the procedure - this is the approach used by
+=scheme=.
+Alternatively /normal-order/ evaluation only evaluates operands when their values are needed, as in
+listing\nbsp[[src:subs-model-example-normal-order]]. 
+
 #+CAPTION: Normal-order evaluation example
 #+NAME: src:subs-model-example-normal-order
 #+BEGIN_SRC scheme
@@ -53,6 +58,10 @@ Alternatively /normal-order/ evaluation only evaluates operands when their value
   25
 #+END_SRC
 
+Both normal- and applicative-order evaluation yield the same results /when procedure application can
+be modelled by the substitution model/, however as there are efficiency benefits to the
+applicative-order application this is the one used by the =scheme= interpreter.
+
 ** Special forms: conditionals
 
 /Special forms/ don't obey the usual evaluation rules, take ~if~ for example
@@ -61,12 +70,14 @@ Alternatively /normal-order/ evaluation only evaluates operands when their value
       <consequent>
       <alternative>)
 #+END_SRC
-under normal evaluation rules both ~<cosequent>~ and ~<alternative>~ would be evaluated in addition to
-~<predicate>~, this is undesirable - see problem 1.5 for an example why - instead the ~if~ special form
-is evaluated as
+under the regular evaluation rules both ~<consequent>~ and ~<alternative>~ would be evaluated in
+addition to ~<predicate>~, this is undesirable - see problem 1.5 for an example why - instead the ~if~
+special form is evaluated as:
 1) Evaluate ~<predicate>~
 2) IF true, evaluate ~<consequent>~ expression
 3) Otherwise, evaluate ~<alternative>~ expression
+
+The related ~cond~ is similarly a special form with its own rules of evaluation.
 
 * Processes from procedures
 
@@ -78,7 +89,9 @@ demonstrate this are given below.
 
 Given a way to increment and decrement a number by one (in scheme the ~1+~ and ~1-~ operators
 respectively) addition of two numbers can be defined as in listing\nbsp[[src:peano+.scm]], yielding the
-process shown in listing\nbsp[[src:peano+-example.scm]], treating the ~1+~ and ~1-~ operators as primitive.
+process shown in listing\nbsp[[src:peano+-example.scm]]. 
+Note that here the ~1+~ and ~1-~ procedures are /below/ the level of abstraction considered and are
+treated as primitive.
 
 #+CAPTION: Implementing addition in P\eacute{}ano arithmetic
 #+NAME: src:peano+.scm
@@ -103,7 +116,7 @@ process shown in listing\nbsp[[src:peano+-example.scm]], treating the ~1+~ and ~
 #+END_SRC
 
 A similar, but very subtly different, implementation of addition is given in
-listing\nbsp[[src:peano+-2.scm]].
+listing\nbsp[[src:peano+-2.scm]]. 
 As can be seen ~peano+-2~ is nearly identical to the former definition, however the process it evolves
 in listing\nbsp[[src:peano+-2-example.scm]] is significantly different.
 
@@ -141,7 +154,82 @@ is thus a (linear) /recursion/.[fn:1]
 A key difference is that an iteration has /explicit state/ stored in its variables - it can be stopped
 and restarted as if nothing happened - whereas recursions store /implicit state/ in the process.
 
-** Example: Fibonacci numbers
+** Designing procedures for recursive processes
+
+The above examples are all recursively-defined algorithms, giving rise to either recursive or
+iterative processes, in the case of recursive processes their designs all follow a similar pattern
+1) /Wishful thinking/ - assume that a method exists for solving a smaller/simpler version of the
+   problem.
+2) /Decomposing the problem/ - take the problem and split it into a combination of simple operations
+   and the solution to the smaller problem. This requires some ingenuity.
+3) /Identifying the "smallest" problem/ - this problem is either non-decomposable or sufficiently
+   small that is solved directly.
+This results in a program design that tests the input, applying either the /recursive case/ or the
+/base case/ when the smallest input is reached.
+
+Another well known recursive algorithm is calculating the factorial
+\begin{equation}
+  n! =
+  \begin{cases}
+    n \left( n - 1 \right)! & n > 1 \\
+    1 & \mbox{otherwise}
+  \end{cases}
+\end{equation}
+as can be seen it consists of a test resulting in either the application of a simple procedure
+(multiplication) to a smaller version of the problem $\left( n - 1 \right)!$, or a base case which
+immediately returns its solution /i.e./ $1$.
+
+Defining a procedure for a recursive process follows relatively trivially following the mathematical
+definition 
+#+BEGIN_SRC scheme
+  (define (fact n)
+    (if (> n 1)
+        (* n (fact (- n 1)))
+        1))
+#+END_SRC
+which as can be seen follows the above pattern: /assume/ that there is a solution for the smaller
+problem ~(fact (- n 1))~; use this to solve the original problem with simple operations; test for the
+base case where we can solve directly $1! = 1$.
+
+** Designing procedures for iterative processes
+
+The design of iterative processes requires identifying how to accumulate partial results combined
+with an initialisation step to start the process.
+This can be visualised as creating a table where each row is determined from the previous row(s), /e.g./
+
+| Step | Result               |
+|------+----------------------|
+| $0$  | $x_0$                 |
+| $1$  | $f\left( x_0 \right)$ |
+| ...  | ...                  |
+
+Applying this approach to the factorial it can be seen it is accumulating a series of products, /i.e./
+\begin{equation}
+  \begin{split}
+    n! &= n \times \left( n - 1 \right) \times \ldots \times 1 \\
+    &= \left( n \times \left( n - 1 \right) \right) \times \ldots \times 1
+  \end{split}
+\end{equation}
+by storing the running product, no deferred operations are necessary, yielding an iterative process!
+An example implementation is given below:
+#+BEGIN_SRC scheme
+  (define (fact n)
+    (define (fact-iter product step)
+      (if (> step n)
+          product
+          (fact-iter (* product step)
+                     (+ step 1))))
+    (fact-iter 1 1))
+#+END_SRC
+
+#+RESULTS:
+: #<unspecified>
+
+Note that compared to the recursive process which followed almost directly from the mathematical
+definition, designing the procedure for an iterative process required additional consideration of
+the problem.
+
+*** Exercise: An iterative Fibonacci process
 
 A classic example of recursive procedures and processes are the Fibonacci numbers
 \begin{equation*}
@@ -152,9 +240,9 @@ A classic example of recursive procedures and processes are the Fibonacci number
     Fib\left(n - 2\right) + Fib\left(n - 1\right) & \mbox{otherwise}
   \end{cases}
 \end{equation*}
-listing\nbsp[[src:fib.scm]] translates this almost directly into lisp.
+listing\nbsp[[src:fib.scm]] translates this almost directly into =scheme=.
 The process this evolves is /tree recursive/ - as can be seen ~(fib n)~ requires evaluating ~(fib (- n
-1))~ and ~(fib (-n 2))~, ~(fib (- n 2))~ requires evaluating ~(fib (- n 1))~ and so on - resulting in an
+1))~ and ~(fib (-n 2))~, ~(fib (- n 1))~ requires evaluating ~(fib (- n 2))~ and so on - resulting in an
 exponential growth in work (in fact evaluating ~(fib n)~ requires
 $\mathcal{O}\left(Fib\left(n\right)\right)$ work) - the memory requirements can be determined by
 examining the length of the longest branch, here memory is $\mathcal{O}\left(n\right)$.
@@ -168,8 +256,6 @@ examining the length of the longest branch, here memory is $\mathcal{O}\left(n\r
         (+ (fib (- n 1)
                 (- n 2)))))
 #+END_SRC
-
-*** Exercise: An iterative Fibonacci process
 
 An iterative Fibonacci process would evaluate ~(fib n)~ in $\mathcal{O}\left(1\right)$ space.
 
@@ -208,46 +294,77 @@ cases automatically.
     (fib-iter n 1 0))
 #+END_SRC
 
+In addition to being $\mathcal{O}\left(1\right)$ in space the iterative process is also
+$\mathcal{O}\left(n\right)$ in time, resulting in significant computational savings for $n\rightarrow\infty$.
 Whilst the tree-recursive process is computationally inefficient they are useful due to the ease of
 implementation, the iterative process required effort up front to develop.[fn:2]
 
-** Designing recursive algorithms 
+** Formal proofs
 
-The above examples are all recursively-defined algorithms, giving rise to either recursive or
-iterative processes, their designs all follow a similar pattern
-1) /Wishful thinking/ - assume that a method exists for solving a smaller/simpler version of the
-   problem.
-2) /Decomposing the problem/ - take the problem and split it into a combination of simple operations
-   and the solution to the smaller problem. This requires some ingenuity.
-3) /Identifying the ``smallest'' problem/ - this problem is either non-decomposable or sufficiently
-   small that is solved directly.
-This results in a program design that tests the input, applying either the /recursive case/ or the
-/base case/ when the smallest input is reached.
+/This comes from the 3^{rd} handout of the lecture notes./
 
-*** Example: Factorial
+It is important to be able to have confidence in the results returned by a program - designing a
+procedure that efficiently computes the wrong answer is not very useful!
+One approach would be to simply test the program, however considering the range of possible inputs
+would require /exhaustive/ testing to show that the program won't fail for any (valid) input.
+Alternatively, if a program can be /proven/ correct it will work for all (valid) inputs.
 
-Another well known recursive algorithm is calculating the factorial
+*** Proof by induction
+
+To demonstrate this, consider the predicate
 \begin{equation}
-  n! =
-  \begin{cases}
-    n \left( n - 1 \right)! & n > 1 \\
-    1 & \mbox{otherwise}
-  \end{cases}
+  P\left(n\right) : \sum^n_{l=0} 2^l = 2^{n+1} - 1
 \end{equation}
-as can be seen it consists of a test resulting in either the application of a simple procedure
-(multiplication) to a smaller version of the problem $\left( n - 1 \right)!$, or a base case which
-immediately returns its solution /i.e./ $1$.
+to prove this is true for all possible inputs requires showing it holds for some base case, /e.g./
+$n=0$:
+\begin{equation}
+  P\left( 0 \right) : 2^0 = 2^1 - 1 = 1 \Rightarrow P\left( 0 \right) = T
+\end{equation}
+Then it needs to be shown that the truth of the base case proves the truth of all other cases
+\begin{equation}
+  \begin{split}
+    P\left(n+1\right) &: \sum^{n+1}_{l=0} 2^l &= \sum^n_{l=0} 2^l + 2^{n+1} \\
+    & &= \left( 2^{n+1} - 1 \right) + 2^{n+1} \\
+    & & = 2^{n+2} - 1 = 2^{\left(n + 1\right) + 1} - 1 \\
+    \therefore \forall n>=0 &: P\left( n \right) &
+  \end{split}
+\end{equation}
+because $P\left(n\right)$ holds for the base case $n=0$ and for the next case $n+1$ it follows that
+it holds for all $n>=0$.
 
-Defining a recursive procedure follows relatively trivially
-#+BEGIN_SRC scheme
-  (define (fact n)
-    (if (> n 1)
-        (* n (fact (- n 1)))
-        1))
-#+END_SRC
+*** Example: factorial
 
-*** Formal proofs
+Returning to the factorial, the proof by induction can be demonstrated for a program.
+\begin{equation}
+  \begin{split}
+    P(n)&:(define\ (fact\ n) \\
+    &\qquad (if\ (=\ n\ 1) \\
+    &\qquad\qquad 1 \\
+    &\quad\qquad (*\ n\ (fact\ (-\ n\ 1)))))
+  \end{split}
+\end{equation}
+For the base case $n=1$ $(fact\ 1)$ returns $1=1!$, therefore $P\left(1\right)=T$.
+To show it works for /all/ positive integers:
+\begin{equation}
+  \begin{split}
+    (fact\ (+\ n\ 1)) &= (*\ (+\ n\ 1)\ (fact\ n)) \\
+    &= (*\ (+\ n\ 1)\ n!) = (n + 1)!
+  \end{split}
+\end{equation}
+where it has been assumed that $(fact\ n) = n!$, as proven by the base case it can then be induced
+that $\forall{}n>0:P\left(n\right)$.
 
+As this example shows, induction is a basis for understanding, analysing and proving the correctness
+of recursive procedure definitions.
+It can also be used in the design of programs - given a new problem:
+1) Identify base case and solution
+2) Turn to the issue of breaking the problem int a simpler version, assuming that the code will solve
+   the simpler version
+3) Use that to construct the inductive step - /how/ to solve the full problem
+/c.f./ the procedures described in \S[[Designing procedures for recursive processes]] and \S[[Designing
+procedures for iterative processes]]. 
+
+* Orders of growth
 * Footnotes
 
 [fn:2] Could a /sufficiently smart/ compiler transform an easy to specify tree-recursive procedure
