@@ -365,6 +365,62 @@ It can also be used in the design of programs - given a new problem:
 procedures for iterative processes]]. 
 
 * Orders of growth
+
+Using a model, /e.g./ the substitution model, allows the evolution of a process from a procedure to be
+determined and consequently an estimate of the required computational resources to execute it for a
+given problem size $R\left(n\right)$.
+Such estimates are expressed in terms of order of growth
+$R\left(n\right)=\mathcal{O}\left(f\left(n\right)\right)$ where $f\left(n\right)$ is the leading
+order term in the growth trend /e.g./ the linear iterative process for P\eacute{}ano addition is linear in
+time $\mathcal{O}\left(n\right)$ and constant in space $\mathcal{O}\left(1\right)$.
+
+** Example: exponentiation
+
+The examples already shown have demonstrated how different implementations can give rise to
+processes with constant, linear or exponential orders of growth.
+Exponentiation
+\begin{equation}
+  \begin{split}
+    b^n &= b \times b^{n-1} \\
+    b^0 &= 1
+  \end{split}
+\end{equation}
+can be translated into a linear recursion
+#+BEGIN_SRC scheme
+  (define (expt b n)
+    (if (= n 0)
+        1
+        (* b (expt b (- n 1)))))
+#+END_SRC
+a procedure for a linear iterative process can also be developed, similarly to the factorial
+function.
+
+A different kind of process can be developed by noting that exponents can be expressed as a series
+of successive squares
+\begin{equation}
+  b^n =
+  \begin{cases}
+    {\left( b^{n/2} \right)}^2 & n\ \mbox{is even} \\
+    b \times b^{n-1} & \mbox{otherwise}
+  \end{cases}
+\end{equation}
+yielding the procedure
+#+BEGIN_SRC scheme
+  (define (fast-expt b n)
+    (cond ((= n 0)
+           1)
+          ((even? n)
+           (square (fast-expt b (/ n 2))))
+          (else
+           (* b (fast-expt b (- n 1))))))
+#+END_SRC
+This procedure evolves a recursive process (an iteration could also be written) however what is
+interesting is the time complexity:
+- for even inputs the reduced problem size is halved
+- for odd inputs the reduced problem size is one smaller as before
+this means that every two steps at most the problem size is approximately halved, consequently the
+order of growth is logarithmic /i.e./ $\mathcal{O}\left(log\left(n\right)\right)$.
+
 * Footnotes
 
 [fn:2] Could a /sufficiently smart/ compiler transform an easy to specify tree-recursive procedure
