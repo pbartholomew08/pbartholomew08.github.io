@@ -203,6 +203,8 @@ This can be visualised as creating a table where each row is determined from the
 | $1$  | $f\left( x_0 \right)$ |
 | ...  | ...                  |
 
+this is the explicit state referred to previously.
+
 Applying this approach to the factorial it can be seen it is accumulating a series of products, /i.e./
 \begin{equation}
   \begin{split}
@@ -373,6 +375,8 @@ Such estimates are expressed in terms of order of growth
 $R\left(n\right)=\mathcal{O}\left(f\left(n\right)\right)$ where $f\left(n\right)$ is the leading
 order term in the growth trend /e.g./ the linear iterative process for P\eacute{}ano addition is linear in
 time $\mathcal{O}\left(n\right)$ and constant in space $\mathcal{O}\left(1\right)$.
+Note these estimates are crude, ignoring the effect of coefficients and lower order terms, /e.g./
+$f\left(n\right)=3n^2$ and $f\left(n\right)=n^2+2n$ are both $\mathcal{O}\left(n^{2}\right)$.
 
 ** Example: exponentiation
 
@@ -420,6 +424,7 @@ interesting is the time complexity:
 - for odd inputs the reduced problem size is one smaller as before
 this means that every two steps at most the problem size is approximately halved, consequently the
 order of growth is logarithmic /i.e./ $\mathcal{O}\left(log\left(n\right)\right)$.
+Such processes are attractive as they are relatively insensitive to the size of the input.
 
 * Footnotes
 
