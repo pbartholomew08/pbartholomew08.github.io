@@ -47,7 +47,7 @@ is a /procedure/ for how to compute (or estimate) the square root.
 
 Ultimately, we want to be able to perform complex tasks, this necessarily results in complex
 processes, the aim of studying processes is /controlling complexity/.
-SICP studies three approaches managing complexity:
+SICP studies three approaches to managing complexity:
 1) Procedure and data abstraction
    - hiding complexity in "black boxes"
 2) Conventional interfaces and programming paradigms
@@ -61,7 +61,7 @@ SICP studies three approaches managing complexity:
 Around this point in the lecture Hal Abelson points out that the complexity stems only from the
 problem itself: a physical implementation of a system using /real/ components must also tackle
 problems arising from physical constraints such as noise, tolerance, /etc/.; in contrast processes in
-computer science are built from ideal /not/ approximated components and thus are really only limited
+computer science are built from ideal, /not/ approximated, components and thus are really only limited
 by imagination.
 
 * Black boxes
