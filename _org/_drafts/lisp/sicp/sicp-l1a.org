@@ -1,0 +1,195 @@
+#+BEGIN_EXPORT html
+---
+layout: post
+title: SICP Lecture 1A - Introduction to Lisp
+---
+#+END_EXPORT
+
+#+begin_export html
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+#+end_export
+
+#+begin_quote
+Computer science is a terrible name for this business... it's not a science, it's also not really
+very much about computers...
+
+--- Hal Abelson
+#+end_quote
+
+I've decided that I should put lockdown to good use and work through /Structure and Interpretation of
+Computer Programs/, following the book cite:Abelson1996, [[https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-001-structure-and-interpretation-of-computer-programs-spring-2005/video-lectures/][video lecture series]] and [[https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-001-structure-and-interpretation-of-computer-programs-spring-2005/lecture-notes/][MIT-OCW lecture
+notes]].
+[[https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-001-structure-and-interpretation-of-computer-programs-spring-2005/video-lectures/1a-overview-and-introduction-to-lisp][Lecture 1A]] of the video introduces the course before introducing the Scheme dialect of Lisp,
+corresponding to book §1.1.1 and MIT-OCW lectures 1 and 2.
+
+* Overview
+
+Computer science is concerned with the study of /processes/, abstract concepts that manipulate and
+transform data, and a formalism for their analysis.
+To execute a process a set of instructions is required, this /imperative/ or "how to" knowledge is
+written down in a /procedure/ and programming languages provide a way to precisely specify
+procedures.
+This is in contrast with /declarative/ "what is" knowledge, such as
+\begin{equation}
+  y=\sqrt{x}\ \mbox{is the } y\ \mbox{such that } y^2=x
+\end{equation}
+defining /what/ a square root is, whereas Heron's method
+\begin{align}
+  \mbox{While } \left| y^2_n - x \right| &> \varepsilon \\
+  y_{n+1} &= \frac{y_n + x/y_n}{2}
+\end{align}
+describes /how/ to compute a square root.
+
+The goal in analysing processes and the procedures that define them is to be able to design, build
+and understand large, complex systems in order to achieve /something/.
+Achieving some task may be sufficient, however many problems are so large and costly that the
+process evolved by a na\iuml{}ve solution may be impractical to the point of being useless, by developing
+tools to study procedures and the processes they yield, computer science atleast makes approaching
+such problems possible.
+Complexity arises in computer science as a result of the complexity inherent in the system being
+modelled.
+This is in contrast to physical systems which must work with /real/ components, in computer science
+they are built from /idealised/ components about which we know everything
+#+begin_quote
+the constraints imposed... are the limits of our own minds.
+
+--- Hal Abelson
+#+end_quote
+As these systems grow larger it becomes necessary to suppress and control the complexity, only by
+developing these means of controlling complexity is it possible to study the processes controlling
+these systems.
+
+** Methods of abstraction
+
+In SICP, and in some sense computer science, the focus is on developing and applying methods of
+abstraction as a core technique in computer science as a means to /suppress detail/ and control
+complexity in order to be better able to design and study procedures and the processes they yield.
+Three major techniques will be explored:
+1) *Black box abstraction* - the idea of taking some complexity and placing the details in a /named/ box
+   such that the details needn't be understood, /e.g./ given a procedure for computing square roots
+   called ~SQRT~ it can be used as
+   \begin{equation}
+     x \rightarrow SQRT \rightarrow y=\sqrt{x}
+   \end{equation}
+   the details of how to compute a square root are suppressed within the ~SQRT~ routine, for the user
+   they don't matter.
+2) *Conventional interfaces* - provide agreed upon ways to plug things together such as /generic
+   operations/ allowing ~(* x (+ a1 a2))~ to be applied to numbers, vectors, signals, /etc./
+3) *Metalinguistic abstraction* - developing a /new/ language that is better suited to describing the
+   problem at hand helps suppress complexity
+
+* Introduction to Lisp
+
+As stated in \S[[*Overview]] a programming language is really a way to communicate ideas about processes
+by writing down procedures; in SICP this is done using the Scheme dialect of Lisp, I'll be using
+[[https://www.gnu.org/software/guile/][Guile Scheme]].
+How many characters it takes to invert a matrix is irrelevant - how you go about doing so if matrix
+inversion was not built into the language is key.
+
+** Elements of a programming language
+
+The elements of a programming language that make it useful for expressing these ideas are its [[*Primitive
+ elements][primitive elements]], [[*Means of combination][means of combination]] and [[*Means of abstraction][means of abstraction]].
+
+*** Primitive elements
+
+The primitive elements of a programming language are the data and procedures that are "built in" to
+a system.
+They are themselves a form of /black box abstraction/, providing an abstraction over low level
+details.
+For example the symbol ~3~ represents the number three, which in terms of binary bits would be
+implemented as ~0000 0011~, the symbol however is generally much easier to work with; likewise, the
+symbol ~+~ represents a procedure for performing addition.
+In Lisp evaluating a primitive expression simply returns its value, either the number $3$ or the
+addition procedure in the above examples; by convention, all expressions in Lisp return a value.
+
+*** Means of combination
+
+Means of combination enable forming /compound/ elements, in Lisp this achieved by /combinations/ which,
+using a parenthesised prefix notation represent /application/ of a procedure to some arguments, /e.g./
+#+begin_src scheme
+  (+ 3 17.4 5)
+#+end_src
+the first term is the /operator/ and subsequent terms the /operands/.
+Evaluating a combination evaluates the operator and operands, returning their values as a procedure
+and arguments to which the procedure is applied, respectively, the result of the procedure is
+returned as the value of the combination.
+By using parenthesised prefix notation it is possible to give the operator an arbitrary length list
+of operands, and also to /nest/ combinations unambiguously such as
+#+begin_src scheme
+  (+ 3 (* 5 7) 8 2)
+#+end_src
+This can be seen as a notation for tress of procedures and their arguments, with values accumulating
+up to the root node to be returned as the value of the evaluated combination.
+
+*** Means of abstraction
+
+Means of combination allow for expressing compound data or procedures, however they do not in
+themselves achieve the goal of black box abstraction as they would have to be written out in full
+each time they are used.
+The ability to name something enables abstraction by putting the object in a box whose name (if well
+chosen) tells you what it is, for example in Lisp (specifically Scheme) the area of a
+circle of radius 5 could be abstracted as in listing\nbsp[[src:area_circle.scm]], subsequently evaluating
+the variable ~a~ would return the area of the circle as its value.
+What is happening is that the ~define~ /special form/[fn:1] associates the /name/ given as its first argument
+with the /value/ given by evaluating its second argument, returning this name-value pairing as a
+/variable/.
+This name-value pairing is stored in the environment, essentially a table of name-value pairs (at
+the top-level this is the /global environment/).
+
+#+CAPTION: Creating a new variable in Scheme to store the area of a circle
+#+NAME: src:area_circle.scm
+#+begin_src scheme
+  (define a (* 3.14 (* 5 5)))
+#+end_src
+
+More powerful still is to capture the /idea/ of how to compute a circle's area in a procedure, rather
+than store the area of every possible circle.
+Listing\nbsp[[src:circle_area.scm]] shows how this can be done in Scheme; this actually makes use of some
+/syntactic sugar/, explained below.
+
+#+CAPTION: Creating a procedure in Scheme to compute the area of a circle
+#+NAME: src:circle_area.scm
+#+begin_src scheme
+  (define (circle-area r)
+    (* 3.14 (* r r)))
+#+end_src
+
+What is actually happening in listing\nbsp[[src:circle_area.scm]] is a procedure is being created as the
+object to be paired with the name given in the first operand - a list of the procedure name and its
+arguments - this is made more clear by the equivalent definition given in
+listing\nbsp[[src:circle_area_lambda.scm]], where the ~lambda~ special form is Lisp's method for creating
+procedures following the syntax shown in listing\nbsp[[src:lambda.scm]].
+Evaluating a ~lambda~ special form returns a procedure as its value, neither the formal parameters nor
+the body are evaluated at this time; /crucially/ these user-defined procedures are indistinguishable
+from built-in procedures.
+
+#+CAPTION: Explicitly naming a procedure in Scheme to compute the area of a circle
+#+NAME: src:circle_area_lambda.scm
+#+begin_src scheme
+  (define circle-area (lambda (r)
+                        (* 3.14 (* r r))))
+#+end_src
+
+#+CAPTION: The syntax of the ~lambda~ special form.
+#+NAME: src:lambda.scm
+#+begin_src scheme
+  (lambda (<formal parameters>)
+    <body>)
+#+end_src
+
+* Exercises
+
+* References 
+:PROPERTIES:
+:UNNUMBERED: t
+:END:
+
+bibliographystyle:unsrt
+bibliography:~/Documents/library.bib
+
+* Footnotes
+
+[fn:1] A /special form/ does not obey the usual evaluation rules of a combination. 
