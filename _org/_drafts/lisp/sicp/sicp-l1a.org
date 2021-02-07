@@ -96,9 +96,7 @@ The elements of a programming language that make it useful for expressing these 
 *** Primitive elements
 
 The primitive elements of a programming language are the data and procedures that are "built in" to
-a system.
-They are themselves a form of /black box abstraction/, providing an abstraction over low level
-details.
+a system, they are themselves a form of /abstraction/ low level details.
 For example the symbol ~3~ represents the number three, which in terms of binary bits would be
 implemented as ~0000 0011~, the symbol however is generally much easier to work with; likewise, the
 symbol ~+~ represents a procedure for performing addition.
@@ -126,16 +124,15 @@ up to the root node to be returned as the value of the evaluated combination.
 
 *** Means of abstraction
 
-Means of combination allow for expressing compound data or procedures, however they do not in
-themselves achieve the goal of black box abstraction as they would have to be written out in full
-each time they are used.
+Means of combination allow for expressing compound data or procedures, however without being able to
+associate a name to them they would have to be written out in full each time they are used.
 The ability to name something enables abstraction by putting the object in a box whose name (if well
 chosen) tells you what it is, for example in Lisp (specifically Scheme) the area of a
 circle of radius 5 could be abstracted as in listing\nbsp[[src:area_circle.scm]], subsequently evaluating
 the variable ~a~ would return the area of the circle as its value.
-What is happening is that the ~define~ /special form/[fn:1] associates the /name/ given as its first argument
-with the /value/ given by evaluating its second argument, returning this name-value pairing as a
-/variable/.
+The ~define~ /[[*Special forms][special form]]/ associates the /name/ given as its first argument with the /value/ given
+by evaluating its second argument, returning this name-value pairing as a /variable/ - the name is not
+evaluated otherwise the created variable would not be named as expected!
 This name-value pairing is stored in the environment, essentially a table of name-value pairs (at
 the top-level this is the /global environment/).
 
@@ -144,6 +141,8 @@ the top-level this is the /global environment/).
 #+begin_src scheme
   (define a (* 3.14 (* 5 5)))
 #+end_src
+
+**** Creating procedures
 
 More powerful still is to capture the /idea/ of how to compute a circle's area in a procedure, rather
 than store the area of every possible circle.
@@ -159,10 +158,10 @@ Listing\nbsp[[src:circle_area.scm]] shows how this can be done in Scheme; this a
 
 What is actually happening in listing\nbsp[[src:circle_area.scm]] is a procedure is being created as the
 object to be paired with the name given in the first operand - a list of the procedure name and its
-arguments - this is made more clear by the equivalent definition given in
+/formal parameters/ - this is made more clear by the equivalent definition given in
 listing\nbsp[[src:circle_area_lambda.scm]], where the ~lambda~ special form is Lisp's method for creating
 procedures following the syntax shown in listing\nbsp[[src:lambda.scm]].
-Evaluating a ~lambda~ special form returns a procedure as its value, neither the formal parameters nor
+Evaluating a ~lambda~ [[*Special forms][special form]] /returns a procedure as its value/, neither the formal parameters nor
 the body are evaluated at this time; /crucially/ these user-defined procedures are indistinguishable
 from built-in procedures.
 
@@ -180,9 +179,178 @@ from built-in procedures.
     <body>)
 #+end_src
 
-* Exercises
+*** Special forms
 
-* References 
+Special forms do not follow the usual evaluation rules, rather they follow their own specific rules
+such as the ~define~ and ~lambda~ forms introduced above.
+
+*** Case analysis
+
+Case analysis enables testing a condition by evaluating a /predicate/ and performing different actions
+(the /consequent/ or /alternate/) based on the truth value of the predicate, typically this takes the form of
+an ~if-then-else~, such as
+#+begin_src scheme
+  (if (<predicate>)
+      <consequent>
+      <alternate>)
+#+end_src
+if the predicate evaluates as true, the ~if~ returns the consequent expression as its value, otherwise
+the alternate expression is returned.
+Multiple conditions may be tested in an ~if-elseif-else~ form, expressed in Lisp using ~cond~
+#+begin_src scheme
+  (cond (<predicate-1>
+         <body-1>)
+        (<predicate-2>
+         <body-2>)
+        ...
+        (<predicate-n>
+         <body-n>))
+#+end_src
+From the discussion above, it is clear that ~if~ and ~cond~ are both [[*Special forms][special forms]], only the body
+returned by a true predicate is evaluated.
+
+Without case analysis the procedures that may be defined are relatively limited, with case analysis
+it becomes possible to develop much more complex procedures.
+
+**** Recursive procedures and looping
+
+A procedure might be [[file:202101311105.org][defined]] in terms of itself as a form of looping, /e.g./
+#+begin_src scheme
+  (define (infinite-loop)
+    (inifinite-loop))
+#+end_src
+will call itself in an infinite loop - not very useful!
+Case analysis is the means to implement a stopping condition, as an example application, counting to
+$n$ could be implemented as
+#+begin_src scheme
+  (define (count n)
+    (count-iter 0 n))
+
+  (define (count-iter s n)
+    (if (= 0 n)
+        s
+        (count-iter (1+ s) (1- n))))
+#+end_src
+
+* Black box abstraction
+
+Black box abstraction encapsulates complexity in a box, [[*Means of abstraction][hiding it behind a name]], the contents of
+which needn't be understood to make use of it, simply it is expected to perform some particular task
+such as providing a value for \pi or /e.g./ given a procedure ~SQRT~ for computing square roots, we expect
+it to behave as
+\begin{equation}
+  x \rightarrow SQRT \rightarrow y=\sqrt{x} \ ,
+\end{equation}
+/how/ it computes the square root doesn't matter.
+Once defined black boxes can be treated as primitive and combined to form larger, more complex black
+boxes, raising the level of abstraction; this process can be continued at the new level of
+abstraction and so on to build large, complex systems from smaller components.
+
+** Procedural abstraction
+
+Black box abstractions facilitate building large complex systems from smaller components which
+/modularise/ common ideas.
+For instance, to compute the area of a circle you square the radius and multiply this by \pi, a
+straightforward definition of this procedure is given in listing\nbsp[[src:area_circle.scm]].
+
+#+CAPTION: A procedure to compute the area of a circle
+#+NAME: src:area_circle.scm
+#+begin_src scheme
+  (define (circle-area r)
+    (* 3.14 (* r r)))
+#+end_src
+
+Whilst such a straightforward procedure is easy to understand, it doesn't /express/ clearly what is
+being done, listing\nbsp[[src:area_circle_modular.scm]] demonstrates a better approach based on /procedural
+abstraction/ to replace the action of squaring a number with a procedure that achieves the same.
+The result is a procedure that is easier to understand because the implementation details of how to
+square a number have been suppressed by the ~square~ abstraction, from the perspective of ~circle-area~
+any procedure that computes the square is equally good and by abstracting away the squaring process
+it becomes possible to replace it with a more efficient implementation without changing the
+definition of ~circle-area~. 
+
+#+CAPTION: Computing the area of a circle using procedural abstraction
+#+NAME: src:area_circle_modular.scm
+#+begin_src scheme
+  (define (circle-area r)
+    (* 3.14 (square r)))
+#+end_src
+
+*** A procedure for procedural abstraction
+
+Listing\nbsp[[src:area_circle_modular.scm]] demonstrates the application of procedural abstraction to the
+original procedure definition given in listing\nbsp[[src:area_circle.scm]], improving its legibility by
+capturing the concept of /squaring things/ in the ~square~ procedure (which can likely be reused
+elsewhere) and suppressing the detail of its implementation in an [[file:202101302251.org][abstraction]].
+
+Procedural abstraction can be achieved by applying a relatively straightforward procedure
+cite:Grimson2004b:
+1) Identify sub=tasks within the computational process, these can be isolated as /modules/
+2) Develop a /procedural abstraction/ for each module
+3) Create a procedure to direct the interaction of these modules through their procedural
+   abstractions
+4) Apply steps 1-3 to each identified module
+
+** Block structuring
+
+When building a complex procedure making use of procedural abstraction, the names given for some or
+all of the modules may express concepts that are of wider use, but whose details are specific to the
+procedure at hand.
+To illustrate this consider the implementation of Heron's method in listing\nbsp[[src:herons-method.scm]],
+the concepts of testing if a guess is good enough, or improving a guess would equally be applicable
+to a related procedure for finding cube roots, however an implementer of this procedure would have
+to find new names for these sub-procedures.
+
+#+CAPTION: An implementation of Heron's method
+#+NAME: src:herons-method.scm
+#+begin_src scheme
+  (define (herons-root x)
+    (try 1.0 x))
+
+  (define (try guess x)
+    (if (good-enough? guess x)
+        guess
+        (try (improve-guess guess x) x)))
+
+  (define (good-enough? guess x)
+    (< (abs (- (square guess) x))
+       0.001))
+
+  (define (improve-guess guess x)
+    (/ (+ guess (/ x guess))
+       2))
+#+end_src
+
+It would be better if procedural abstractions specific to a particular procedure did not pollute the
+namespace and therefore affect the work of others.
+This can be achieved by /block structuring/ the code, defining sub-modules as part of the definition
+of the procedure being developed as shown in listing\nbsp[[src:herons-method-bs.scm]].
+
+#+CAPTION: A block-structured implemenation of Heron's method
+#+NAME: src:herons-method-bs.scm
+#+begin_src scheme
+  (define (herons-root-blockstruct x)
+    (define (good-enough? guess)
+      (< (abs (- (square guess) x))
+         0.001))
+    (define (improve-guess guess)
+      (/ (+ guess (/ x guess))
+         2))
+    (define (try guess)
+      (if (good-enough? guess)
+          guess
+          (try (improve-guess guess))))
+    (try 1.0))
+#+end_src
+
+If the language is /lexically scoped/ (as most Lisps are), this can also simplify the implementation
+of sub-modules, as shown in listing\nbsp[[src:herons-method-bs.scm]] ~x~ needn't be passed to them, rather it
+is left as a free variable and takes its value from the enclosing scope of ~herons-root~; note that
+~square~ is a procedural abstraction of a general concept and so is assumed to be defined somewhere
+externally to ~herons-root~.
+
+* Exercises
+* References
 :PROPERTIES:
 :UNNUMBERED: t
 :END:
@@ -190,6 +358,3 @@ from built-in procedures.
 bibliographystyle:unsrt
 bibliography:~/Documents/library.bib
 
-* Footnotes
-
-[fn:1] A /special form/ does not obey the usual evaluation rules of a combination. 
