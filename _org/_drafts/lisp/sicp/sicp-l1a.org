@@ -283,8 +283,7 @@ original procedure definition given in listing\nbsp[[src:area_circle.scm]], impr
 capturing the concept of /squaring things/ in the ~square~ procedure (which can likely be reused
 elsewhere) and suppressing the detail of its implementation in an [[file:202101302251.org][abstraction]].
 
-Procedural abstraction can be achieved by applying a relatively straightforward procedure
-cite:Grimson2004b:
+Procedural abstraction can be achieved by applying a relatively straightforward procedure:
 1) Identify sub=tasks within the computational process, these can be isolated as /modules/
 2) Develop a /procedural abstraction/ for each module
 3) Create a procedure to direct the interaction of these modules through their procedural
