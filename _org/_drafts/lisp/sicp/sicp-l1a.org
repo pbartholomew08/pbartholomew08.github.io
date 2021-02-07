@@ -64,7 +64,7 @@ these systems.
 ** Methods of abstraction
 
 In SICP, and in some sense computer science, the focus is on developing and applying methods of
-abstraction as a core technique in computer science as a means to /suppress detail/ and control
+abstraction as a core technique in computer science for /suppressing detail/ and controlling
 complexity in order to be better able to design and study procedures and the processes they yield.
 Three major techniques will be explored:
 1) *Black box abstraction* - the idea of taking some complexity and placing the details in a /named/ box
@@ -85,8 +85,15 @@ Three major techniques will be explored:
 As stated in \S[[*Overview]] a programming language is really a way to communicate ideas about processes
 by writing down procedures; in SICP this is done using the Scheme dialect of Lisp, I'll be using
 [[https://www.gnu.org/software/guile/][Guile Scheme]].
-How many characters it takes to invert a matrix is irrelevant - how you go about doing so if matrix
-inversion was not built into the language is key.
+In approaching a new programming language, Hal Abelson says:
+#+begin_quote
+you don't say, how many characters does it take to invert a matrix?
+It's irrelevant.
+What you say is, if the language did not come with matrices built in or something else built in, how
+could I then build that thing?
+
+--- Hal Abelson
+#+end_quote
 
 ** Elements of a programming language
 
@@ -96,7 +103,7 @@ The elements of a programming language that make it useful for expressing these 
 *** Primitive elements
 
 The primitive elements of a programming language are the data and procedures that are "built in" to
-a system, they are themselves a form of /abstraction/ low level details.
+a system, they are themselves a form of /abstraction/ over low level details.
 For example the symbol ~3~ represents the number three, which in terms of binary bits would be
 implemented as ~0000 0011~, the symbol however is generally much easier to work with; likewise, the
 symbol ~+~ represents a procedure for performing addition.
@@ -106,7 +113,8 @@ addition procedure in the above examples; by convention, all expressions in Lisp
 *** Means of combination
 
 Means of combination enable forming /compound/ elements, in Lisp this achieved by /combinations/ which,
-using a parenthesised prefix notation represent /application/ of a procedure to some arguments, /e.g./
+using a parenthesised list of terms interpreted following a prefix notation to represent /application/
+of a procedure to some arguments, /e.g./
 #+begin_src scheme
   (+ 3 17.4 5)
 #+end_src
@@ -162,7 +170,7 @@ object to be paired with the name given in the first operand - a list of the pro
 listing\nbsp[[src:circle_area_lambda.scm]], where the ~lambda~ special form is Lisp's method for creating
 procedures following the syntax shown in listing\nbsp[[src:lambda.scm]].
 Evaluating a ~lambda~ [[*Special forms][special form]] /returns a procedure as its value/, neither the formal parameters nor
-the body are evaluated at this time; /crucially/ these user-defined procedures are indistinguishable
+the body are evaluated at this time; crucially these user-defined procedures are /indistinguishable/
 from built-in procedures.
 
 #+CAPTION: Explicitly naming a procedure in Scheme to compute the area of a circle
@@ -181,8 +189,8 @@ from built-in procedures.
 
 *** Special forms
 
-Special forms do not follow the usual evaluation rules, rather they follow their own specific rules
-such as the ~define~ and ~lambda~ forms introduced above.
+Special forms do not follow the usual evaluation rules for combinations, rather they follow their
+own specific rules such as the ~define~ and ~lambda~ forms introduced above.
 
 *** Case analysis
 
@@ -212,16 +220,17 @@ returned by a true predicate is evaluated.
 Without case analysis the procedures that may be defined are relatively limited, with case analysis
 it becomes possible to develop much more complex procedures.
 
-**** Recursive procedures and looping
+*** Recursive procedures and looping
 
-A procedure might be [[file:202101311105.org][defined]] in terms of itself as a form of looping, /e.g./
+A procedure might be defined in terms of itself as a form of looping, /e.g./
 #+begin_src scheme
   (define (infinite-loop)
     (inifinite-loop))
 #+end_src
 will call itself in an infinite loop - not very useful!
-Case analysis is the means to implement a stopping condition, as an example application, counting to
-$n$ could be implemented as
+Using case analysis enables testing a stopping condition which, when met, ends the loop and returns
+the result.
+As an example application, counting to $n$ could be implemented as
 #+begin_src scheme
   (define (count n)
     (count-iter 0 n))
@@ -251,37 +260,44 @@ abstraction and so on to build large, complex systems from smaller components.
 Black box abstractions facilitate building large complex systems from smaller components which
 /modularise/ common ideas.
 For instance, to compute the area of a circle you square the radius and multiply this by \pi, a
-straightforward definition of this procedure is given in listing\nbsp[[src:area_circle.scm]].
-
-#+CAPTION: A procedure to compute the area of a circle
-#+NAME: src:area_circle.scm
-#+begin_src scheme
-  (define (circle-area r)
-    (* 3.14 (* r r)))
-#+end_src
-
+straightforward definition of this procedure was given previously in listing\nbsp[[src:area_circle.scm]].
 Whilst such a straightforward procedure is easy to understand, it doesn't /express/ clearly what is
 being done, listing\nbsp[[src:area_circle_modular.scm]] demonstrates a better approach based on /procedural
-abstraction/ to replace the action of squaring a number with a procedure that achieves the same.
+abstraction/ to replace the action of squaring a number with a procedure that achieves the same,
+given in listing\nbsp[[src:square.scm]].
 The result is a procedure that is easier to understand because the implementation details of how to
 square a number have been suppressed by the ~square~ abstraction, from the perspective of ~circle-area~
 any procedure that computes the square is equally good and by abstracting away the squaring process
 it becomes possible to replace it with a more efficient implementation without changing the
-definition of ~circle-area~. 
+definition of ~circle-area~[fn:1].
 
 #+CAPTION: Computing the area of a circle using procedural abstraction
 #+NAME: src:area_circle_modular.scm
-#+begin_src scheme
+#+begin_src scheme :noweb strip-export
+  <<src:square.scm>>
   (define (circle-area r)
     (* 3.14 (square r)))
 #+end_src
+
+#+RESULTS: src:area_circle_modular.scm
+: #<unspecified>
+
+#+CAPTION: Procedure for squaring a number
+#+NAME: src:square.scm
+#+begin_src scheme
+  (define (square x)
+    (* x x))
+#+end_src
+
+#+RESULTS: src:square.scm
+: #<unspecified>
 
 *** A procedure for procedural abstraction
 
 Listing\nbsp[[src:area_circle_modular.scm]] demonstrates the application of procedural abstraction to the
 original procedure definition given in listing\nbsp[[src:area_circle.scm]], improving its legibility by
 capturing the concept of /squaring things/ in the ~square~ procedure (which can likely be reused
-elsewhere) and suppressing the detail of its implementation in an [[file:202101302251.org][abstraction]].
+elsewhere) and suppressing the detail of its implementation in an abstraction.
 
 Procedural abstraction can be achieved by applying a relatively straightforward procedure:
 1) Identify sub=tasks within the computational process, these can be isolated as /modules/
@@ -349,6 +365,107 @@ is left as a free variable and takes its value from the enclosing scope of ~hero
 externally to ~herons-root~.
 
 * Exercises
+
+** Exercise 1.1
+
+Asks what are the values returned by several expressions shown as comments in the code block below.
+
+#+CAPTION: Solution to exercise 1.1
+#+begin_src scheme
+  10
+                                          ; 10
+  (+ 5 3 4)
+                                          ; 12
+  (- 9 1)
+                                          ; 8
+  (/ 6 2)
+                                          ; 3
+  (+ (* 2 4) (- 4 6))
+                                          ; 6
+  (define a 3)
+                                          ; a
+  (define b (+ a 1))
+                                          ; b
+  (+ a b (* a b))
+                                          ; 19
+  (= a b)
+                                          ; #f
+  (if (and (> b a)
+           (< b (* a b)))
+      b
+      a)
+                                          ; 4
+  (cond ((= a 4)
+         6)
+        ((= b 4)
+         (+ 6 7 a))
+        (else
+         25))
+                                          ; 16
+  (+ 2 (if (> b a)
+           b
+           a))
+                                          ; 6
+  (* (cond ((> a b)
+            a)
+           ((< a b)
+            b)
+           (else
+            -1))
+     (+ a 1))
+                                          ; 16
+#+end_src
+
+** Exercise 1.2
+
+Translate
+\begin{equation}
+  \frac{5 + 4 + \left( 2 - \left( 3 - \left( 6 + 4/5 \right) \right) \right)}{3 \left( 6 - 2 \right)
+  \left( 2 - 7 \right)}
+\end{equation}
+into prefix form.
+
+#+CAPTION: Solution to exercise 1.2
+#+begin_src scheme
+  (/ (+ 5 4 (- 2 (- 3 (+ 6 (/ 4 5)))))
+     (* 3 (- 6 2) (- 2 7)))
+#+end_src
+
+** Exercise 1.3
+
+Define a procedure that takes three numbers as arguments and returns the sum of the squares of the
+two larger numbers.
+
+#+CAPTION: Solution to exercise 1.3
+#+begin_src scheme
+  (define (sicp-1.3 a b c)
+    (cond ((and (>= a b)
+                (>= b c))
+           (sum-of-squares a b))
+          ((and (> b a)
+                (> c a))
+           (sum-of-squares b c))
+          (else
+           (sum-of-squares a c))))
+#+end_src
+
+** Exercise 1.4
+
+The model of evaluation allows combinations whose operators are compound expressions, using this
+observation described the behaviour of the following procedure:
+#+begin_src scheme
+  (define (a-plus-abs-b a b)
+    ((if (> b 0)
+         +
+         -)
+     a b))
+#+end_src
+
+Evaluating the procedure returned by ~a-plus-abs-b~, the operator is obtained by evaluating the ~if~
+form, returning either the ~+~ or ~-~ symbol depending on the sign of ~b~, this is then evaluated to
+obtain the appropriate procedure which is applied to operands ~a~ and ~b~ with the result it returns
+$a+\left|b\right|$.
+
 * References
 :PROPERTIES:
 :UNNUMBERED: t
@@ -357,3 +474,6 @@ externally to ~herons-root~.
 bibliographystyle:unsrt
 bibliography:~/Documents/library.bib
 
+* Footnotes
+
+[fn:1] This is a somewhat contrived example, but the principle applies in more complex scenarios. 
