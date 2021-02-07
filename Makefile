@@ -12,3 +12,6 @@ jekyll-build:
 
 jekyll-update:
 	bundle install
+
+clean:
+	rm -r _drafts
