@@ -1,6 +1,0 @@
-#+BEGIN_EXPORT html
----
-layout: post
-title: Hello
----
-#+END_EXPORT
