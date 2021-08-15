@@ -1,4 +1,7 @@
 #+TITLE: Discrete thoughts
 
 
-Starting over...
+* About
+
+I plan to work my way through Structure and Interpretation of Computer Programs, why not record it
+on github pages?
