@@ -1,0 +1,2 @@
+#+TITLE: Testing and debugging pure Fortran
+#+DATE: {{{time(%Y-%m-%d)}}}

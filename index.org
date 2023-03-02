@@ -4,6 +4,11 @@
 
 Bit plain because I got fed up of Jekyll and don't know CSS (yet).
 
+* Thoughts
+
+
+
 * Projects
 
 - [[./sicp/sicp.org][SICP]]
+
