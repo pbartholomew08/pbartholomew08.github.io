@@ -22,13 +22,31 @@ I am going to argue that whenever the limitations of a ~pure~ procedure feel pro
 instead indicating a design issue with the code.
 
 Consider code listing\nbsp[[lst:coeff_a_ref.f90]] which computes one of the coefficients for the compact
-finite difference scheme presented by GAMET1999 and a test that it reduces to a known value on
-uniform grids, given in listing\nbsp[[lst:test_uniform_grid.f90]].
-With the ~gfortran~ compiler the test passed and all appeared to be well, however using ~crayftn~ on
-ARCHER2 caused a test failure with the result falling outside the range of tolerance for the test.
-Testing with ~ifort~ also caused a test failure and after some investigation it was found that the
-tests would pass when floating point optimisations were disabled (~gfortran~ also failed the test with
-optimisations, which are off by default, enabled).
+finite difference scheme presented by cite:Gamet1999, given as
+\begin{equation}
+  A_i = \frac{
+    \begin{split}
+      h_{i-1}h_{i}h_{i+1} + h^2_{i}h_{i+1} + h_{i-1}h_{i}h_{i+2} + h^2_{i}h_{i+2} -
+      h_{i-1}h^2_{i}\alpha - h_{i-1}h_{i}h_{i+1}\alpha \\
+      - h_{i-1}h_{i}h_{i+2}\alpha - h_{i-1}h_{i}h_{i+1}\beta -h^2_{i}h_{i+1}\beta
+      -h_{i-1}h^2_{i+1}\beta -2h_{i}h^2_{i+1}\beta - h^3_{i+1}\beta \\
+      + h_{i-1}h_{i}h_{i+2}\beta + h^2_{i}h_{i+2}\beta + 2h_{i-1}h_{i+1}h_{i+2}\beta +
+      4h_{i}h_{i+1}h_{i+2}\beta + 3h^2_{i+1}h_{i+2}\beta
+    \end{split}
+  }{h_{i+1}\left(h_{i} + h_{i+1}\right)\left(h_{i-1} + h_{i} + h_{i+1}\right) h_{i+2}} \ ,
+\end{equation}
+where $h_{i}=x_{i}-x_{i-1}$ and $\alpha=\beta$.
+Clearly the implementation of this function will be very susceptible to coding error, a simple test
+is that it reduces to a known value of the grid spacing on uniform grids, with such a test given in
+listing\nbsp[[lst:test_uniform_grid.f90]].
+Even as I implemented this I expected floating point errors to be an issue due to the need to cancel
+many products of terms of similar magnitude on a uniform grid, however with the ~gfortran~ compiler
+the test passed and all appeared to be well.
+Testing with ~crayftn~ on ARCHER2 however caused a test failure with the result falling outside the
+range of tolerance for the test, and similarly using ~ifort~ on a workstation also caused a test
+failure.
+After some investigation it was found that the tests would pass when floating point optimisations
+were disabled (~gfortran~ also failed the test with optimisations, which are off by default, enabled).
 
 #+CAPTION: Original implementation of coefficient evaluation.
 #+NAME: lst:coeff_a_ref.f90
@@ -76,8 +94,8 @@ To debug this problem, I knew what the computed values inside ~coeff_a~ should b
 the simplest solution was to remove the ~pure~ attribute, insert some ~print~ statements and check these
 values.
 After some rearranging of the terms I arrived at the implementation shown in
-listing\nbsp[[lst:coeff_a_new.f90]] which passed the tests with optimisations enabled, I could then remove
-the ~print~ statements and restore the ~pure~ attribute.
+listing\nbsp[[lst:coeff_a_new.f90]], explicitly grouping terms that cancel, which passed the tests with
+optimisations enabled, I could then remove the ~print~ statements and restore the ~pure~ attribute.
 
 #+CAPTION: "Alternative" implementation of coefficient evaluation with debugging print statements.
 #+NAME: lst:coeff_a_new.f90
@@ -196,5 +214,8 @@ implementation even more robust!
 #+end_src
 
 In conclusion, ~pure~ shouldn't be viewed as a restriction preventing you from using your usual
-practices to debug failing code, rather friction caused by the ~pure~ attribute can help guide code
-design that is debuggable and testable.
+practices to debug failing code, rather friction caused by the ~pure~ attribute should highlight code
+design flaws, helping guide development of code that is debuggable and testable.
+
+bibliography:../../../Documents/Bibliography/library.bib
+bibliographystyle:plain
