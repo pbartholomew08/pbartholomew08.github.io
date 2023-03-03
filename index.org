@@ -9,6 +9,3 @@ Bit plain because I got fed up of Jekyll and don't know CSS (yet).
 
 
 - [[./thoughts/testing_pure_fortran.org][Better procedure design using the Fortran pure attribute]]
-* Projects
-
-- [[./sicp/sicp.org][SICP]]
