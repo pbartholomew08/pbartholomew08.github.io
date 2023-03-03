@@ -1,2 +1,200 @@
-#+TITLE: Testing and debugging pure Fortran
+#+TITLE: Better procedure design using the Fortran ~pure~ attribute
 #+DATE: {{{time(%Y-%m-%d)}}}
+
+#+OPTIONS: toc:nil
+
+#+LATEX_HEADER: \usepackage{fullpage}
+#+LATEX_HEADER: \hypersetup{colorlinks}
+
+This article describes the resolution of an issue that arose when debugging a ~pure~ Fortran procedure
+as part of work related to the ARCHER2 eCSE06-04 project /3decomp: Towards Adaptive Mesh Refinement
+in the high-order CFD code Xcompact3d/.
+
+When writing a function or subroutine in Fortran it is often desirable to give it the ~pure~
+attribute.
+Declaring a procedure as ~pure~ places certain constraints on what it can do which may allow the
+compiler to apply additional optimisations, such as in-lining, and some use cases such as ~elemental~
+procedures may require it.
+One of these constraints is that the procedure cannot perform I/O, including ~print~'ing to screen;
+just as these constraints may aid the compiler, the developer may /perceive/ them as a hindrance,
+especially when debugging the code, leading to objections to the use of ~pure~.
+I am going to argue that whenever the limitations of a ~pure~ procedure feel prohibitive, they are
+instead indicating a design issue with the code.
+
+Consider code listing\nbsp[[lst:coeff_a_ref.f90]] which computes one of the coefficients for the compact
+finite difference scheme presented by GAMET1999 and a test that it reduces to a known value on
+uniform grids, given in listing\nbsp[[lst:test_uniform_grid.f90]].
+With the ~gfortran~ compiler the test passed and all appeared to be well, however using ~crayftn~ on
+ARCHER2 caused a test failure with the result falling outside the range of tolerance for the test.
+Testing with ~ifort~ also caused a test failure and after some investigation it was found that the
+tests would pass when floating point optimisations were disabled (~gfortran~ also failed the test with
+optimisations, which are off by default, enabled).
+
+#+CAPTION: Original implementation of coefficient evaluation.
+#+NAME: lst:coeff_a_ref.f90
+#+begin_src f90
+  pure real function coeff_b_deltas(h)
+    !! Compute the coefficient acting on f_{i-1} of the finite diference given a stencil of grid
+    !! spacings.
+  
+    type(nucfd_stencil_deltas), intent(in) :: h !! Stencil of grid spacings for the finite difference.
+  
+    real :: hm2, hm1, h0, hp1, hp2 ! Grid deltas at i -2, -1, 0, +1, +2
+  
+    select type(deltas => h%stencil)
+    type is(real)
+       hm2 = deltas(-2)
+       hm1 = deltas(-1)
+       h0 = deltas(0)
+       hp1 = deltas(1)
+       hp2 = deltas(2)
+    class default
+       error stop
+    end select
+  
+    associate(beta => alpha) ! To match Gamet et al. (1999)
+      coeff_b_deltas = -hm1 * hp1**2 - h0 * hp1**2 - hm1 * hp1 * hp2 - h0 * hp1 * hp2 &
+           - 3.0 * hm1 * h0**2 * alpha - 4.0 * hm1 * h0 * hp1 * alpha & ! End line 1
+           + h0**3 * alpha + 2.0 * h0**2 * hp1 * alpha - hm1 * hp1**2 * alpha &
+           + h0 * hp1**2 * alpha - 2.0 * hm1 * h0 * hp2 * alpha - hm1 * hp1 * hp2 * alpha & ! End line 2
+           + h0**2 * hp2 * alpha + h0 * hp1 * hp2 * alpha + hm1 * hp1 * hp2 * beta &
+           + h0 * hp1 * hp2 * beta + hp1**2 * hp2 * beta ! End line 3
+      coeff_b_deltas = coeff_b_deltas &
+           / (hm1 * h0 * (h0 + hp1) * (h0 + hp1 + hp2))
+    end associate
+  end function coeff_b_deltas
+#+end_src
+
+#+CAPTION: Testing the implementation of ~coeff_a~ on a uniform grid.
+#+NAME: lst:test_uniform_grid.f90
+#+begin_src f90
+  a = coeff_a(stencil)
+  call test_report("Coefficient A", check_scalar(a, aref / (2.0 * h)))
+#+end_src
+
+To debug this problem, I knew what the computed values inside ~coeff_a~ should be at various stages so
+the simplest solution was to remove the ~pure~ attribute, insert some ~print~ statements and check these
+values.
+After some rearranging of the terms I arrived at the implementation shown in
+listing\nbsp[[lst:coeff_a_new.f90]] which passed the tests with optimisations enabled, I could then remove
+the ~print~ statements and restore the ~pure~ attribute.
+
+#+CAPTION: "Alternative" implementation of coefficient evaluation with debugging print statements.
+#+NAME: lst:coeff_a_new.f90
+#+begin_src f90
+  real function coeff_a_deltas_alt(h)
+    !! Compute the coefficient acting on f_{i+1} of the finite diference given a stencil of grid
+    !! spacings.
+
+    type(nucfd_stencil_deltas), intent(in) :: h !! Stencil of grid spacings for the finite difference.
+
+    real :: hm2, hm1, h0, hp1, hp2 ! Grid deltas at i -2, -1, 0, +1, +2
+
+    select type(deltas => h%stencil)
+    type is(real)
+       hm2 = deltas(-2)
+       hm1 = deltas(-1)
+       h0 = deltas(0)
+       hp1 = deltas(1)
+       hp2 = deltas(2)
+    class default
+       error stop
+    end select
+
+    associate(beta => alpha) ! To match Gamet et al. (1999)
+      coeff_a_deltas_alt = h0 * ((hm1 + h0) * (hp1 + hp2) + 2.0 * hp1 * hp2 * beta) & ! = (14/3) h^3
+           + hm1 * h0 * hp2 * (beta - alpha) & ! Should cancel for case alpha = beta
+           + (h0**2) * (hp2 - hp1) * beta    & ! Should cancel for constant h
+           + hm1 * hp1 * (2.0 * hp2 - h0 - hp1) * beta &      ! Should cancel for constant h
+           + (hp1**3) * (3.0 * hp2 - 2.0 * h0 - hp1) * beta & ! Should cancel for constant h
+           + h0 * (2.0 * hp1 * hp2 * beta - hm1 * (h0 + hp1) * alpha) ! Should cancel for constant h
+           
+      print *, "+++", coeff_a_deltas_alt / (h0**3), 14.0 / 3.0, "+++"
+      coeff_a_deltas_alt = coeff_a_deltas_alt &
+           / (3.0 * hp1 * ((h0 + hp1) / 2.0) * hp2) ! => 14.0 / 9.0 when h = const
+      print *, "+++", coeff_a_deltas_alt, 14.0 / 9.0, "+++"
+      coeff_a_deltas_alt = coeff_a_deltas_alt &
+              / (2.0 * ((hm1 + h0 + hp1) / 3.0)) ! => (14.0 / 9.0) / (2h) when h = const
+    end associate
+  end function coeff_a_deltas_alt
+#+end_src
+
+However, this removal and then restoration of the ~pure~ attribute should have been telling me that
+there was a problem in the design.
+As noted above, there were several stages to the computation which I knew expected values for ---
+/these are themselves ~pure~ functions!/
+Rather than temporarily disabling purity I should instead implement each stage as a ~pure~ function,
+the outer function can then call each of these and assemble the solution from their return values.
+This is shown in listing\nbsp[[lst:coeff_a_final.f90]], the implementation of the functions computing each
+stage aren't shown for brevity, however they reflect the body of the computation shown in
+~coeff_deltas_alt~.
+
+#+CAPTION: Improved ~pure~ implementation.
+#+NAME: lst:coeff_a_final.f90
+#+begin_src f90
+  module pure real function coeff_a_deltas(h)
+    !! Compute the coefficient acting on f_{i+1} of the finite diference given a stencil of grid
+    !! spacings.
+  
+    type(nucfd_stencil_deltas), intent(in) :: h !! Stencil of grid spacings for the finite difference.
+  
+    real :: numerator, numerator_corr, denominator, divisor
+  
+    call coeff_a_components(h, numerator, numerator_corr, denominator, divisor)
+    coeff_a_deltas = ((numerator + numerator_corr) / denominator) / divisor
+  
+  end function coeff_a_deltas
+  
+  module pure subroutine coeff_a_components(h, numerator, numerator_corr, denominator, divisor)
+  
+    type(nucfd_stencil_deltas), intent(in) :: h !! Stencil of grid spacings for the finite difference.
+  
+    real, intent(out) :: numerator
+    real, intent(out) :: numerator_corr
+    real, intent(out) :: denominator
+    real, intent(out) :: divisor
+  
+    real :: hm1, h0, hp1, hp2 ! Grid deltas at i -2, -1, 0, +1, +2
+  
+    select type(deltas => h%stencil)
+    type is(real)
+       hm1 = deltas(-1)
+       h0 = deltas(0)
+       hp1 = deltas(1)
+       hp2 = deltas(2)
+    class default
+       error stop
+    end select
+  
+    associate(beta => alpha) ! To match Gamet et al. (1999)
+      numerator = coeff_numerator(hm1, h0, hp2, hp2, beta)
+      numerator_corr = coeff_numerator_corr(hm1, h0, hp1, hp2, alpha, beta)
+      denominator = coeff_denominator(h0, hp1, hp2)
+      divisor = coeff_divisor(hm1, h0, hp1)
+    end associate
+  
+  end subroutine coeff_a_components
+#+end_src
+
+As these per-stage functions are relatively low level it is undesirable to expose them outside the
+module, therefore a helper subroutine (~coef_a_components~ in listing\nbsp[[lst:coeff_a_final.f90]]) provides
+an easy to use interface returning the values for each stage.
+An additional benefit is that we can now test the intermediate values in the test suite, making the
+implementation even more robust!
+
+#+CAPTION: Expanded test suite based on improved ~pure~ implementation.
+#+NAME: lst:test_uniform_grid_expanded.f90
+#+begin_src f90
+  call coeff_a_components(points_to_deltas(stencil), numerator, numerator_corr, denominator, divisor)
+  call test_report("Coefficient A numerator", check_scalar(numerator, numerator_f1ref * (h**3)))
+  call test_report("Coefficient A numerator correction", &
+       check_scalar(numerator_corr, numerator_corr_f1ref * (h**3)))
+  call test_report("Coefficient A denominator", check_scalar(denominator, denominator_f1ref * (h**3)))
+  call test_report("Coefficient A divisor", check_scalar(divisor, divisor_f1ref * h))
+  a = coeff_a(stencil)
+  call test_report("Coefficient A", check_scalar(a, aref / (2.0 * h)))
+#+end_src
+
+In conclusion, ~pure~ shouldn't be viewed as a restriction preventing you from using your usual
+practices to debug failing code, rather friction caused by the ~pure~ attribute can help guide code
+design that is debuggable and testable.
