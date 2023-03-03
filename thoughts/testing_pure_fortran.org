@@ -197,8 +197,8 @@ stage aren't shown for brevity, however they reflect the body of the computation
 As these per-stage functions are relatively low level it is undesirable to expose them outside the
 module, therefore a helper subroutine (~coef_a_components~ in listing\nbsp[[lst:coeff_a_final.f90]]) provides
 an easy to use interface returning the values for each stage.
-An additional benefit is that we can now test the intermediate values in the test suite, making the
-implementation even more robust!
+An additional benefit is that we can now test the intermediate values in the test suite, shown in
+listing\nbsp[[lst:test_uniform_grid_expanded.f90]] making the implementation even more robust!
 
 #+CAPTION: Expanded test suite based on improved ~pure~ implementation.
 #+NAME: lst:test_uniform_grid_expanded.f90
@@ -214,8 +214,8 @@ implementation even more robust!
 #+end_src
 
 In conclusion, ~pure~ shouldn't be viewed as a restriction preventing you from using your usual
-practices to debug failing code, rather friction caused by the ~pure~ attribute should highlight code
-design flaws, helping guide development of code that is debuggable and testable.
+practices to debug failing code, rather when the ~pure~ attribute causes friction this should
+highlight code design flaws, helping guide development of code that is debuggable and testable.
 
 bibliography:../../../Documents/Bibliography/library.bib
 bibliographystyle:plain
