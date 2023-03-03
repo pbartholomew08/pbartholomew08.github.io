@@ -1,5 +1,7 @@
 #+TITLE: Discrete thoughts
 
+#+OPTIONS: toc:1
+
 * About
 
 Bit plain because I got fed up of Jekyll and don't know CSS (yet).
@@ -8,4 +10,8 @@ Bit plain because I got fed up of Jekyll and don't know CSS (yet).
 
 
 
-- [[./thoughts/testing_pure_fortran.org][Better procedure design using the Fortran pure attribute]]
+** 2023
+
+*** March
+
+- [2023-03-03 Fri] [[./thoughts/testing_pure_fortran.org][Better procedure design using the Fortran pure attribute]]
