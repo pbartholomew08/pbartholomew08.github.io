@@ -78,7 +78,7 @@ were disabled (~gfortran~ also failed the test with optimisations, which are off
            + h0**2 * hp2 * alpha + h0 * hp1 * hp2 * alpha + hm1 * hp1 * hp2 * beta &
            + h0 * hp1 * hp2 * beta + hp1**2 * hp2 * beta ! End line 3
       coeff_b_deltas = coeff_b_deltas &
-           / (hm1 * h0 * (h0 + hp1) * (h0 + hp1 + hp2))
+           / (hp1 * (h0 + hp1) * (hm1 + h0 + hp1) * hp2)
     end associate
   end function coeff_b_deltas
 #+end_src
