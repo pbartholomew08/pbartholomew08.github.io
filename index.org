@@ -8,8 +8,6 @@ Bit plain because I got fed up of Jekyll and don't know CSS (yet).
 
 * Thoughts
 
-
-
 ** 2023
 
 *** March
