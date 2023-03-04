@@ -3,14 +3,14 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2023-03-03 Fri 18:02 -->
+<!-- 2023-03-04 Sat 15:08 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Better procedure design using the Fortran <code>pure</code> attribute</title>
-<meta name="generator" content="Org mode" />
+<title>Better procedure design using the Fortran ~pure~ attribute</title>
 <meta name="author" content="Paul Bartholomew" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -31,8 +31,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -41,21 +42,21 @@
   pre.src {
     position: relative;
     overflow: auto;
-    padding-top: 1.2em;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
   pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -190,31 +191,8 @@
     { font-size: 10px; font-weight: bold; white-space: nowrap; }
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
+  .org-svg { }
 </style>
-<script type="text/javascript">
-// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
-<!--/*--><![CDATA[/*><!--*/
-     function CodeHighlightOn(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.add("code-highlighted");
-         target.classList.add("code-highlighted");
-       }
-     }
-     function CodeHighlightOff(elem, id)
-     {
-       var target = document.getElementById(id);
-       if(null != target) {
-         elem.classList.remove("code-highlighted");
-         target.classList.remove("code-highlighted");
-       }
-     }
-    /*]]>*///-->
-// @license-end
-</script>
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         displayAlign: "center",
@@ -235,11 +213,10 @@
              }
 });
 </script>
-<script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
-<div id="content">
+<div id="content" class="content">
 <h1 class="title">Better procedure design using the Fortran <code>pure</code> attribute</h1>
 <p>
 This article describes the resolution of an issue that arose when debugging a <code>pure</code> Fortran procedure
@@ -261,8 +238,8 @@ instead indicating a design issue with the code.
 </p>
 
 <p>
-Consider code listing&nbsp;<a href="#orgf5c59d8">1</a> which computes one of the coefficients for the compact
-finite difference scheme presented by <a class='org-ref-reference' href="#Gamet1999">Gamet1999</a>, given as
+Consider code listing&nbsp;<a href="#orgc875aeb">1</a> which computes one of the coefficients for the compact
+finite difference scheme presented by (1), given as
 </p>
 \begin{equation}
   A_i = \frac{
@@ -278,9 +255,9 @@ finite difference scheme presented by <a class='org-ref-reference' href="#Gamet1
 \end{equation}
 <p>
 where \(h_{i}=x_{i}-x_{i-1}\) and \(\alpha=\beta\).
-Clearly the implementation of this function will be very susceptible to coding error, a simple test
-is that it reduces to a known value of the grid spacing on uniform grids, with such a test given in
-listing&nbsp;<a href="#org601a838">2</a>.
+Clearly the implementation of this function will be very susceptible to coding error, and requires
+testing - a simple test is that it reduces to a known value of the grid spacing on uniform grids,
+with such a test given in listing&nbsp;<a href="#org3f86db2">2</a>.
 Even as I implemented this I expected floating point errors to be an issue due to the need to cancel
 many products of terms of similar magnitude on a uniform grid, however with the <code>gfortran</code> compiler
 the test passed and all appeared to be well.
@@ -292,7 +269,7 @@ were disabled (<code>gfortran</code> also failed the test with optimisations, wh
 </p>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 1: </span>Original implementation of coefficient evaluation.</label><pre class="src src-f90" id="orgf5c59d8"><span style="color: #4f97d7; font-weight: bold;">pure</span> <span style="color: #ce537a; font-weight: bold;">real </span><span style="color: #4f97d7; font-weight: bold;">function</span><span style="color: #7590db;"> </span><span style="color: #bc6ec5; font-weight: bold;">coeff_b_deltas</span><span style="color: #4f97d7; background-color: #292b2e;">(</span><span style="color: #b2b2b2; background-color: #292b2e;">h</span><span style="color: #4f97d7; background-color: #292b2e;">)</span>
+<label class="org-src-name"><span class="listing-number">Listing 1: </span>Original implementation of coefficient evaluation.</label><pre class="src src-f90" id="orgc875aeb"><span style="color: #4f97d7; font-weight: bold;">pure</span> <span style="color: #ce537a; font-weight: bold;">real </span><span style="color: #4f97d7; font-weight: bold;">function</span><span style="color: #7590db;"> </span><span style="color: #bc6ec5; font-weight: bold;">coeff_b_deltas</span><span style="color: #4f97d7; background-color: #292b2e;">(</span><span style="color: #b2b2b2; background-color: #292b2e;">h</span><span style="color: #4f97d7; background-color: #292b2e;">)</span>
   <span style="color: #2aa1ae; background-color: #292e34;">!! </span><span style="color: #2aa1ae; background-color: #292e34;">Compute the coefficient acting on f_{i-1} of the finite diference given a stencil of grid</span>
   <span style="color: #2aa1ae; background-color: #292e34;">!! </span><span style="color: #2aa1ae; background-color: #292e34;">spacings.</span>
 
@@ -326,7 +303,7 @@ were disabled (<code>gfortran</code> also failed the test with optimisations, wh
 </div>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 2: </span>Testing the implementation of <code>coeff_a</code> on a uniform grid.</label><pre class="src src-f90" id="org601a838">a = coeff_a<span style="color: #4f97d7;">(</span>stencil<span style="color: #4f97d7;">)</span>
+<label class="org-src-name"><span class="listing-number">Listing 2: </span>Testing the implementation of <code>coeff_a</code> on a uniform grid.</label><pre class="src src-f90" id="org3f86db2">a = coeff_a<span style="color: #4f97d7;">(</span>stencil<span style="color: #4f97d7;">)</span>
 <span style="color: #4f97d7; font-weight: bold;">call</span> <span style="color: #bc6ec5; font-weight: bold;">test_report</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Coefficient A"</span>, check_scalar<span style="color: #bc6ec5;">(</span>a, aref / <span style="color: #2d9574;">(</span>2.0 * h<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
 </pre>
 </div>
@@ -336,12 +313,12 @@ To debug this problem, I knew what the computed values inside <code>coeff_a</cod
 the simplest solution was to remove the <code>pure</code> attribute, insert some <code>print</code> statements and check these
 values.
 After some rearranging of the terms I arrived at the implementation shown in
-listing&nbsp;<a href="#orgb9adba0">3</a>, explicitly grouping terms that cancel, which passed the tests with
+listing&nbsp;<a href="#orgc03d265">3</a>, explicitly grouping terms that cancel, which passed the tests with
 optimisations enabled, I could then remove the <code>print</code> statements and restore the <code>pure</code> attribute.
 </p>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 3: </span>&ldquo;Alternative&rdquo; implementation of coefficient evaluation with debugging print statements.</label><pre class="src src-f90" id="orgb9adba0"><span style="color: #ce537a; font-weight: bold;">real </span><span style="color: #4f97d7; font-weight: bold;">function</span><span style="color: #7590db;"> </span><span style="color: #bc6ec5; font-weight: bold;">coeff_a_deltas_alt</span><span style="color: #4f97d7; background-color: #292b2e;">(</span><span style="color: #b2b2b2; background-color: #292b2e;">h</span><span style="color: #4f97d7; background-color: #292b2e;">)</span>
+<label class="org-src-name"><span class="listing-number">Listing 3: </span>&ldquo;Alternative&rdquo; implementation of coefficient evaluation with debugging print statements.</label><pre class="src src-f90" id="orgc03d265"><span style="color: #ce537a; font-weight: bold;">real </span><span style="color: #4f97d7; font-weight: bold;">function</span><span style="color: #7590db;"> </span><span style="color: #bc6ec5; font-weight: bold;">coeff_a_deltas_alt</span><span style="color: #4f97d7; background-color: #292b2e;">(</span><span style="color: #b2b2b2; background-color: #292b2e;">h</span><span style="color: #4f97d7; background-color: #292b2e;">)</span>
   <span style="color: #2aa1ae; background-color: #292e34;">!! </span><span style="color: #2aa1ae; background-color: #292e34;">Compute the coefficient acting on f_{i+1} of the finite diference given a stencil of grid</span>
   <span style="color: #2aa1ae; background-color: #292e34;">!! </span><span style="color: #2aa1ae; background-color: #292e34;">spacings.</span>
 
@@ -386,13 +363,13 @@ As noted above, there were several stages to the computation which I knew expect
 <i>these are themselves <code>pure</code> functions!</i>
 Rather than temporarily disabling purity I should instead implement each stage as a <code>pure</code> function,
 the outer function can then call each of these and assemble the solution from their return values.
-This is shown in listing&nbsp;<a href="#org17c28ea">4</a>, the implementation of the functions computing each
+This is shown in listing&nbsp;<a href="#org7a800bd">4</a>, the implementation of the functions computing each
 stage aren&rsquo;t shown for brevity, however they reflect the body of the computation shown in
 <code>coeff_deltas_alt</code>.
 </p>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 4: </span>Improved <code>pure</code> implementation.</label><pre class="src src-f90" id="org17c28ea"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #bc6ec5; font-weight: bold;">pure</span> <span style="color: #ce537a; font-weight: bold;">real </span><span style="color: #4f97d7; font-weight: bold;">function</span> <span style="color: #bc6ec5; font-weight: bold;">coeff_a_deltas</span><span style="color: #4f97d7; background-color: #292b2e;">(</span><span style="color: #b2b2b2; background-color: #292b2e;">h</span><span style="color: #4f97d7; background-color: #292b2e;">)</span>
+<label class="org-src-name"><span class="listing-number">Listing 4: </span>Improved <code>pure</code> implementation.</label><pre class="src src-f90" id="org7a800bd"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #bc6ec5; font-weight: bold;">pure</span> <span style="color: #ce537a; font-weight: bold;">real </span><span style="color: #4f97d7; font-weight: bold;">function</span> <span style="color: #bc6ec5; font-weight: bold;">coeff_a_deltas</span><span style="color: #4f97d7; background-color: #292b2e;">(</span><span style="color: #b2b2b2; background-color: #292b2e;">h</span><span style="color: #4f97d7; background-color: #292b2e;">)</span>
   <span style="color: #2aa1ae; background-color: #292e34;">!! </span><span style="color: #2aa1ae; background-color: #292e34;">Compute the coefficient acting on f_{i+1} of the finite diference given a stencil of grid</span>
   <span style="color: #2aa1ae; background-color: #292e34;">!! </span><span style="color: #2aa1ae; background-color: #292e34;">spacings.</span>
 
@@ -439,14 +416,14 @@ stage aren&rsquo;t shown for brevity, however they reflect the body of the compu
 
 <p>
 As these per-stage functions are relatively low level it is undesirable to expose them outside the
-module, therefore a helper subroutine (<code>coef_a_components</code> in listing&nbsp;<a href="#org17c28ea">4</a>) provides
+module, therefore a helper subroutine (<code>coef_a_components</code> in listing&nbsp;<a href="#org7a800bd">4</a>) provides
 an easy to use interface returning the values for each stage.
 An additional benefit is that we can now test the intermediate values in the test suite, shown in
-listing&nbsp;<a href="#orgc9be372">5</a> making the implementation even more robust!
+listing&nbsp;<a href="#orgeecad75">5</a> making the implementation even more robust!
 </p>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 5: </span>Expanded test suite based on improved <code>pure</code> implementation.</label><pre class="src src-f90" id="orgc9be372"><span style="color: #4f97d7; font-weight: bold;">call</span> <span style="color: #bc6ec5; font-weight: bold;">coeff_a_components</span><span style="color: #4f97d7;">(</span>points_to_deltas<span style="color: #bc6ec5;">(</span>stencil<span style="color: #bc6ec5;">)</span>, numerator, numerator_corr, denominator, divisor<span style="color: #4f97d7;">)</span>
+<label class="org-src-name"><span class="listing-number">Listing 5: </span>Expanded test suite based on improved <code>pure</code> implementation.</label><pre class="src src-f90" id="orgeecad75"><span style="color: #4f97d7; font-weight: bold;">call</span> <span style="color: #bc6ec5; font-weight: bold;">coeff_a_components</span><span style="color: #4f97d7;">(</span>points_to_deltas<span style="color: #bc6ec5;">(</span>stencil<span style="color: #bc6ec5;">)</span>, numerator, numerator_corr, denominator, divisor<span style="color: #4f97d7;">)</span>
 <span style="color: #4f97d7; font-weight: bold;">call</span> <span style="color: #bc6ec5; font-weight: bold;">test_report</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Coefficient A numerator"</span>, check_scalar<span style="color: #bc6ec5;">(</span>numerator, numerator_f1ref * <span style="color: #2d9574;">(</span>h**3<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
 <span style="color: #4f97d7; font-weight: bold;">call</span> <span style="color: #bc6ec5; font-weight: bold;">test_report</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Coefficient A numerator correction"</span>, <span style="color: #4f97d7; font-weight: bold;">&amp;</span>
      check_scalar<span style="color: #bc6ec5;">(</span>numerator_corr, numerator_corr_f1ref * <span style="color: #2d9574;">(</span>h**3<span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
@@ -459,21 +436,27 @@ a = coeff_a<span style="color: #4f97d7;">(</span>stencil<span style="color: #4f9
 
 <p>
 In conclusion, <code>pure</code> shouldn&rsquo;t be viewed as a restriction preventing you from using your usual
-practices to debug failing code, rather when the <code>pure</code> attribute causes friction this should
-highlight code design flaws, helping guide development of code that is debuggable and testable.
+practices to debug failing code, rather when the <code>pure</code> attribute causes friction this likely
+indicates code design flaws.
+Wanting to be able to <code>print</code> a variable implies that it should be tested, the original procedure
+should therefore be further decomposed.
+By using modules the low-level procedures this gives rise to don&rsquo;t need to be exposed to the user
+and can be hidden behind a helper subroutine returning the variables, allowing you to test and debug
+not only the original interface, but also the intermediate values that were formerly untestable.
 </p>
 
+<div id="outline-container-orga3bd6a3" class="outline-2">
+<h2 id="orga3bd6a3"><span class="section-number-2">1.</span> References</h2>
+<div class="outline-text-2" id="text-1">
 <p>
-<h1 class='org-ref-bib-h1'>Bibliography</h1>
-<ul class='org-ref-bib'><li><a id="Gamet1999">[Gamet1999]</a> <a name="Gamet1999"></a>Gamet, Ducros, Nicoud & Poinsot, Compact finite difference schemes on non-uniform meshes. Application to direct numerical simulations of compressible flows, <i>International Journal for Numerical Methods in Fluids</i>, <b>29(2)</b>, 159-191 (1999). <a href="http://dx.doi.org/10.1002/(SICI)1097-0363(19990130)29:2<159::AID-FLD781>3.0.CO;2-9">doi</a>.</li>
-</ul>
-
-</p>
+[1] Gamet, L. and Ducros, F. and Nicoud, F. and Poinsot, T., <i>{Compact finite difference schemes on non-uniform meshes. Application to direct numerical simulations of compressible flows}</i>, International Journal for Numerical Methods in Fluids, 1999.</p>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Date: 2023-03-03</p>
+<p class="date">Date: 2023-03-04</p>
 <p class="author">Author: Paul Bartholomew</p>
-<p class="date">Created: 2023-03-03 Fri 18:02</p>
+<p class="date">Created: 2023-03-04 Sat 15:08</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
