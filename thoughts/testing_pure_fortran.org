@@ -4,7 +4,7 @@
 
 #+OPTIONS: toc:nil
 
-#+BIBLIOGRAPHY: ../../../Documents/Bibliography/library.bib
+#+BIBLIOGRAPHY: ../Bibliography/library.bib
 #+CITE_EXPORT: basic numeric numeric
 
 #+LATEX_HEADER: \usepackage{fullpage}
