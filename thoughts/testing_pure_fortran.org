@@ -1,7 +1,11 @@
 #+TITLE: Better procedure design using the Fortran ~pure~ attribute
+#+AUTHOR: Paul Bartholomew
 #+DATE: {{{time(%Y-%m-%d)}}}
 
 #+OPTIONS: toc:nil
+
+#+BIBLIOGRAPHY: ../../../Documents/Bibliography/library.bib
+#+CITE_EXPORT: basic numeric numeric
 
 #+LATEX_HEADER: \usepackage{fullpage}
 #+LATEX_HEADER: \hypersetup{colorlinks}
@@ -22,7 +26,7 @@ I am going to argue that whenever the limitations of a ~pure~ procedure feel pro
 instead indicating a design issue with the code.
 
 Consider code listing\nbsp[[lst:coeff_a_ref.f90]] which computes one of the coefficients for the compact
-finite difference scheme presented by cite:Gamet1999, given as
+finite difference scheme presented by [cite:@Gamet1999], given as
 \begin{equation}
   A_i = \frac{
     \begin{split}
@@ -36,9 +40,9 @@ finite difference scheme presented by cite:Gamet1999, given as
   }{h_{i+1}\left(h_{i} + h_{i+1}\right)\left(h_{i-1} + h_{i} + h_{i+1}\right) h_{i+2}} \ ,
 \end{equation}
 where $h_{i}=x_{i}-x_{i-1}$ and $\alpha=\beta$.
-Clearly the implementation of this function will be very susceptible to coding error, a simple test
-is that it reduces to a known value of the grid spacing on uniform grids, with such a test given in
-listing\nbsp[[lst:test_uniform_grid.f90]].
+Clearly the implementation of this function will be very susceptible to coding error, and requires
+testing - a simple test is that it reduces to a known value of the grid spacing on uniform grids,
+with such a test given in listing\nbsp[[lst:test_uniform_grid.f90]].
 Even as I implemented this I expected floating point errors to be an issue due to the need to cancel
 many products of terms of similar magnitude on a uniform grid, however with the ~gfortran~ compiler
 the test passed and all appeared to be well.
@@ -214,8 +218,14 @@ listing\nbsp[[lst:test_uniform_grid_expanded.f90]] making the implementation eve
 #+end_src
 
 In conclusion, ~pure~ shouldn't be viewed as a restriction preventing you from using your usual
-practices to debug failing code, rather when the ~pure~ attribute causes friction this should
-highlight code design flaws, helping guide development of code that is debuggable and testable.
+practices to debug failing code, rather when the ~pure~ attribute causes friction this likely
+indicates code design flaws.
+Wanting to be able to ~print~ a variable implies that it should be tested, the original procedure
+should therefore be further decomposed.
+By using modules the low-level procedures this gives rise to don't need to be exposed to the user
+and can be hidden behind a helper subroutine returning the variables, allowing you to test and debug
+not only the original interface, but also the intermediate values that were formerly untestable.
 
-bibliography:../../../Documents/Bibliography/library.bib
-bibliographystyle:plain
+* References
+
+#+PRINT_BIBLIOGRAPHY:
