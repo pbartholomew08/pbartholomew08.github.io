@@ -217,14 +217,17 @@ listing\nbsp[[lst:test_uniform_grid_expanded.f90]] making the implementation eve
   call test_report("Coefficient A", check_scalar(a, aref / (2.0 * h)))
 #+end_src
 
-In conclusion, ~pure~ shouldn't be viewed as a restriction preventing you from using your usual
-practices to debug failing code, rather when the ~pure~ attribute causes friction this likely
-indicates code design flaws.
-Wanting to ~print~ a variable implies that it should be tested and the original procedure needs to be
-further decomposed.
-By using modules the low-level procedures this creates can be hidden behind a helper subroutine
-which enables testing and debugging not only the original interface, but also the intermediate
-values that were formerly untestable.
+By retaining the ~pure~ attribute we have arrived at an implementation that is debuggable and better
+tested than the original.
+We /could/ have done the same with regular procedures but this requires discipline when simply using
+~print~ is an easy solution, whereas the use of ~pure~ forced us down this design route.
+In conclusion, ~pure~ shouldn't be viewed as a restriction making it difficult to debug failing code,
+rather when the ~pure~ attribute causes friction this likely indicates code design flaws.
+Wanting to ~print~ a variable implies that its value should be tested and the original procedure needs
+to be further decomposed.
+To present a user-friendly interface the low-level procedures this creates can be hidden behind a
+helper subroutine which enables testing and debugging not only the original interface, but also the
+intermediate values that were formerly untestable.
 
 * References
 

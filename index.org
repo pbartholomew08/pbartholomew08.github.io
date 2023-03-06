@@ -12,5 +12,5 @@ Bit plain because I got fed up of Jekyll and don't know CSS (yet).
 
 *** March
 
-- [2023-03-04 Sat] [[./thoughts/testing_pure_fortran.org][Better procedure design using the Fortran pure attribute]]
+- [2023-03-06 Mon] [[./thoughts/testing_pure_fortran.org][Better procedure design using the Fortran pure attribute]]
   
