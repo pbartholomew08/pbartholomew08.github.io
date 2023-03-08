@@ -7,3 +7,5 @@ _site
 *.tex
 auto
 *.bbl
+
+ltximg
