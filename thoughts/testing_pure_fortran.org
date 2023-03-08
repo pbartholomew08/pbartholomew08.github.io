@@ -55,14 +55,14 @@ were disabled (~gfortran~ also failed the test with optimisations, which are off
 #+CAPTION: Original implementation of coefficient evaluation.
 #+NAME: lst:coeff_a_ref.f90
 #+begin_src f90
-  pure real function coeff_b_deltas(h)
-    !! Compute the coefficient acting on f_{i-1} of the finite diference given a stencil of grid
+  pure real function coeff_a_deltas(h)
+    !! Compute the coefficient acting on f_{i+1} of the finite diference given a stencil of grid
     !! spacings.
-  
+
     type(nucfd_stencil_deltas), intent(in) :: h !! Stencil of grid spacings for the finite difference.
-  
+
     real :: hm2, hm1, h0, hp1, hp2 ! Grid deltas at i -2, -1, 0, +1, +2
-  
+
     select type(deltas => h%stencil)
     type is(real)
        hm2 = deltas(-2)
@@ -73,18 +73,18 @@ were disabled (~gfortran~ also failed the test with optimisations, which are off
     class default
        error stop
     end select
-  
+
     associate(beta => alpha) ! To match Gamet et al. (1999)
-      coeff_b_deltas = -hm1 * hp1**2 - h0 * hp1**2 - hm1 * hp1 * hp2 - h0 * hp1 * hp2 &
-           - 3.0 * hm1 * h0**2 * alpha - 4.0 * hm1 * h0 * hp1 * alpha & ! End line 1
-           + h0**3 * alpha + 2.0 * h0**2 * hp1 * alpha - hm1 * hp1**2 * alpha &
-           + h0 * hp1**2 * alpha - 2.0 * hm1 * h0 * hp2 * alpha - hm1 * hp1 * hp2 * alpha & ! End line 2
-           + h0**2 * hp2 * alpha + h0 * hp1 * hp2 * alpha + hm1 * hp1 * hp2 * beta &
-           + h0 * hp1 * hp2 * beta + hp1**2 * hp2 * beta ! End line 3
-      coeff_b_deltas = coeff_b_deltas &
+      coeff_a_deltas = hm1 * h0 * hp1 + h0**2 * hp1 + hm1 * h0 * hp2 + h0**2 * hp2 &
+           - hm1 * h0**2 * alpha - hm1 * h0 * hp1 * alpha &
+           - hm1 * h0 * hp2 * alpha - hm1 * h0 * hp1 * beta - h0**2 * hp1 * beta &
+           - hm1 * hp1**2 * beta - 2.0 * h0 * hp1**2 * beta - hp1**3 * beta &
+           + hm1 * h0 * hp2 * beta + h0**2 * hp2 * beta + 2.0 * hm1 * hp1 * hp2 * beta &
+           + 4.0 * h0 * hp1 * hp2 * beta + 3.0 * hp1**2 * hp2 * beta
+      coeff_a_deltas = coeff_a_deltas &
            / (hp1 * (h0 + hp1) * (hm1 + h0 + hp1) * hp2)
     end associate
-  end function coeff_b_deltas
+  end function coeff_a_deltas
 #+end_src
 
 #+CAPTION: Testing the implementation of ~coeff_a~ on a uniform grid.
