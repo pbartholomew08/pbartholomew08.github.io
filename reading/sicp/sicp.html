@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-04-19 Sat 22:17 -->
+<!-- 2025-04-21 Mon 22:58 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Discrete thoughts</title>
+<title>Structure and Interpretation of Computer Programs</title>
 <meta name="author" content="Paul Bartholomew" />
 <meta name="generator" content="Org Mode" />
 <style>
@@ -196,68 +196,112 @@
 </head>
 <body>
 <div id="content" class="content">
-<h1 class="title">Discrete thoughts</h1>
-<div id="table-of-contents" role="doc-toc">
-<h2>Table of Contents</h2>
-<div id="text-table-of-contents" role="doc-toc">
-<ul>
-<li><a href="#orgd238210">1. About</a></li>
-<li><a href="#org3b9123e">2. Thoughts</a></li>
-<li><a href="#orgcd93361">3. Reading</a></li>
-</ul>
-</div>
+<h1 class="title">Structure and Interpretation of Computer Programs</h1>
+<blockquote>
+<p>
+Computer science is a terrible name for this business. First of all, it&rsquo;s not a science. &#x2026; It&rsquo;s
+also not really very much about computers. &#x2026; Now, the reason that we think computer science is
+about computers is pretty much the same reason that the (Ancient) Egyptians thought geometry was
+about surveying instruments; and that is, when some field is just getting started and you don&rsquo;t
+really understand it very well, it&rsquo;s very easy to confuse the essence of what you&rsquo;re doing with
+the tools that you use. &#x2014; Hal Abelson&nbsp;(1)
+</p>
+</blockquote>
+
+<p>
+Structure and Interpretation of Computer Programs, <i>aka</i> SICP,&nbsp;(2) is an
+often-recommended textbook in computer science that I have meant to work through for some time.
+In introducing the subject of the book/course &#x2014; <i>computer science</i> &#x2014; the authors immediately take
+issue with the name as it conflates the subject with the study of computers as objects.
+This error in subject matter is clear if we consider that computer science is rooted in the work of
+mathematicians<sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup> that <i>predates</i> modern &ldquo;computers&rdquo;<sup><a id="fnr.2" class="footref" href="#fn.2" role="doc-backlink">2</a></sup>.
+</p>
+
+<div id="outline-container-org368b2d9" class="outline-2">
+<h2 id="org368b2d9"><span class="section-number-2">1.</span> Communicating complex ideas</h2>
+<div class="outline-text-2" id="text-1">
+<blockquote>
+<p>
+First, we want to establish the idea that a computer language is not just a way of getting a
+computer to perform operations but rather that it is a novel formal medium for expressing ideas
+about methodology. &#x2026; Second, we believe that the essential material to be addressed by a subject
+at this level is not the syntax of particular programming-language constructs, nor clever
+algorithms for computing particular functions efficiently, nor even the mathematical analysis of
+algorithms and the foundations of computing, but rather the techniques used to control the
+intellectual complexity of large software systems. &#x2014; Preface to SICP 1<sup>st</sup> Ed.&nbsp;(2)
+</p>
+</blockquote>
+
+<p>
+The position taken by SICP is that computer science is really the study of how we <i>instruct</i>
+computers, and that programming languages are the medium of communicating <i>how to</i> achieve some task.
+Like natural language, as the ideas we aim to communicate grow in complexity, our ability to
+maintain all the necessary details in our mind at once becomes the limiting factor &#x2014; in both cases
+we need to develop means of simplifying our current view of the problem: by inventing new words or
+jargon in natural language; or more generally by developing <i>abstractions</i>.
+</p>
 </div>
 
-<div id="outline-container-orgd238210" class="outline-2">
-<h2 id="orgd238210"><span class="section-number-2">1.</span> About</h2>
-<div class="outline-text-2" id="text-1">
+<div id="outline-container-org746940e" class="outline-3">
+<h3 id="org746940e"><span class="section-number-3">1.1.</span> Programming as a tool for thought</h3>
+<div class="outline-text-3" id="text-1-1">
+<blockquote>
 <p>
-Bit plain because I got fed up of Jekyll and don&rsquo;t know CSS (yet).
+These processes, arising from human experience and thought, are huge in number, intricate in
+detail, and at any time only partially understood. They are modelled to our permanent satisfaction
+rarely by our computer programs. Thus even though our programs are carefully handcrafted discrete
+collections of symbols, mosaics of interlocking functions, they continually evolve: we change them
+as our perception of the model deepens, enlarges, generalizes, until the model ultimately attains
+a metastable place within another model with which we struggle. &#x2014; Alan J. Perlis, Foreword to
+SICP&nbsp;(2) 
+</p>
+</blockquote>
+
+<p>
+Following on from the idea that programming languages enable communicating about methods, and that
+handling complexity is at the core of computer science, then the act of <i>programming</i> can be seen as a
+tool for thought.
+Programming forces us to clarify our ideas, as programming languages will only support precisely
+formed statements<sup><a id="fnr.3" class="footref" href="#fn.3" role="doc-backlink">3</a></sup>, and allows us to tackle larger problems than we could otherwise by
+encouraging the use of abstraction to suppress detail.
 </p>
 </div>
 </div>
-
-<div id="outline-container-org3b9123e" class="outline-2">
-<h2 id="org3b9123e"><span class="section-number-2">2.</span> Thoughts</h2>
-<div class="outline-text-2" id="text-2">
-</div>
-<div id="outline-container-orga5d5cc2" class="outline-3">
-<h3 id="orga5d5cc2"><span class="section-number-3">2.1.</span> 2023</h3>
-<div class="outline-text-3" id="text-2-1">
-</div>
-<div id="outline-container-org795f506" class="outline-4">
-<h4 id="org795f506"><span class="section-number-4">2.1.1.</span> March</h4>
-<div class="outline-text-4" id="text-2-1-1">
-<ul class="org-ul">
-<li><span class="timestamp-wrapper"><span class="timestamp">[2023-03-08 Wed] </span></span> <a href="./thoughts/testing_pure_fortran.html">Better procedure design using the Fortran pure attribute</a></li>
-</ul>
-</div>
-</div>
-</div>
 </div>
 
-<div id="outline-container-orgcd93361" class="outline-2">
-<h2 id="orgcd93361"><span class="section-number-2">3.</span> Reading</h2>
-<div class="outline-text-2" id="text-3">
-</div>
-<div id="outline-container-org95e952f" class="outline-3">
-<h3 id="org95e952f"><span class="section-number-3">3.1.</span> 2025</h3>
-<div class="outline-text-3" id="text-3-1">
-</div>
-<div id="outline-container-orgf299b89" class="outline-4">
-<h4 id="orgf299b89"><span class="section-number-4">3.1.1.</span> April</h4>
-<div class="outline-text-4" id="text-3-1-1">
-<ul class="org-ul">
-<li><span class="timestamp-wrapper"><span class="timestamp">[2025-04-19 Sat] </span></span> <a href="./reading/sicp/sicp.html">Structure and Interpretation of Computer Programs</a></li>
-</ul>
+<div id="outline-container-org6c76dda" class="outline-2">
+<h2 id="org6c76dda">References</h2>
+<div class="outline-text-2" id="text-org6c76dda">
+<p>
+[1] Abelson, Harold and Sussman, Gerald Jay, <i>SICP Lecture 1A: Overview and introduction to Lisp</i>, 1986.</p>
+
+<p>
+[2] Abelson, Harold and Sussman, Gerald Jay and Sussman, Julie, <i>Structure and interpretation of computer programs</i>, McGraw-Hill, 1996.</p>
 </div>
 </div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+Such as Alonso Church, Barkley Rosser, Stephen Kleene, Haskell Curry and Alan Turing.
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2" role="doc-backlink">2</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+The original computers were people <a href="https://en.wikipedia.org/wiki/Computer_(occupation)">https://en.wikipedia.org/wiki/Computer_(occupation)</a>.
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.3" class="footnum" href="#fnr.3" role="doc-backlink">3</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+If the program is to function correctly.
+</p></div></div>
+
+
 </div>
-</div>
-</div>
+</div></div>
 <div id="postamble" class="status">
+<p class="date">Date: 2025-04-21</p>
 <p class="author">Author: Paul Bartholomew</p>
-<p class="date">Created: 2025-04-19 Sat 22:17</p>
+<p class="date">Created: 2025-04-21 Mon 22:58</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
