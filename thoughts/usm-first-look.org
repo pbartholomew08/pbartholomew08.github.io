@@ -1,0 +1,284 @@
+#+TITLE: USM: A first look
+#+AUTHOR: Paul Bartholomew
+#+DATE: {{{time(%Y-%m-%d)}}}
+
+#+OPTIONS: toc:nil
+
+#+BIBLIOGRAPHY: ../Bibliography/library.bib
+#+CITE_EXPORT: basic numeric numeric
+
+#+LATEX_HEADER: \usepackage{fullpage}
+#+LATEX_HEADER: \hypersetup{colorlinks}
+
+The major GPU vendors have recently introduced Unified Shared Memory (USM) programming models that
+simplify accelerator programming by presenting a single memory space that is accessible to both the
+host and device.
+With appropriate hardware support this can reduce the effort required to port/develop codes to/for
+accelerators.
+An obvious question to ask is "What is the cost of using USM /vs/ controlling the data movements
+manually?" in this post I investigate applying some basic data motion-focused optimisations to a
+simple program using OpenMP's target offload directives and compare these against using USM.
+
+The following experiments were performed on one of EPCC's GH200 Grace-Hopper nodes using =nvfortran
+25.1=, the code and results are available at https://github.com/pbartholomew08/omptgt_setget (commit
+=93b1b57=).
+Throughout the experiments dynamically allocated arrays of 10^9 32-bit floats (4 GB) are used.
+Unless stated otherwise programs are compiled using
+#+begin_src makefile
+  FFLAGS=-g -O3 -mp=gpu -Minfo=mp
+#+end_src
+
+* The reference program
+
+The reference program started as a simplified version of a test case used in developing =x3d2=[fn:1]
+in which an array ~a~ is initialised on the host, its values copied to array ~b~ on the device where it
+is modified by a simple kernel, and finally the modified values copied back to ~a~ for validation.
+The main body of the program is shown in Listing\nbsp[[src:main.f90]], as can be seen there is no attempt to
+control data transfers between host and device, each operation simply launches a parallel loop.
+
+#+CAPTION: The basic program (=main1=) body.
+#+NAME: src:main.f90
+#+begin_src f90
+  ! Initialise
+  a(:) = 1.0
+
+  ! Set
+  !$omp target teams distribute parallel do
+  do i = 1, n
+     b(i) = a(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  ! Kernel
+  !$omp target teams distribute parallel do
+  do i = 1, n
+     b(i) = 2 * b(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  ! Get
+  !$omp target teams distribute parallel do
+  do i = 1, n
+     a(i) = b(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  if (any(a /= 2.0)) then
+     error stop
+  else
+     print *, "PASS"
+  end if
+#+end_src
+
+Running this code, using =time= and the ~NVCOMPILER_ACC_NOTIFY~ environment variable to measure the
+execution time and trace data transfers between host and device, we can see in Listing\nbsp[[run:main1]]
+that before each parallel loop the array(s) are copied to the device and after the loop is executed
+they are copied back to the host.
+This excessive data transfer likely explains the 93.92 s runtime.
+
+#+CAPTION: Running the basic accelerated program.
+#+NAME: run:main1
+#+begin_src text
+  $ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main1
+    upload CUDA data  file=.../main.f90 function=main line=16 device=0 threadid=1 variable=b(:) bytes=4000000000
+    upload CUDA data  file=.../main.f90 function=main line=16 device=0 threadid=1 variable=a(:) bytes=4000000000
+    launch CUDA kernel file=.../main.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    download CUDA data  file=.../main.f90 function=main line=20 device=0 threadid=1 variable=a(:) bytes=4000000000
+    download CUDA data  file=.../main.f90 function=main line=20 device=0 threadid=1 variable=b(:) bytes=4000000000
+    upload CUDA data  file=.../main.f90 function=main line=23 device=0 threadid=1 variable=b(:) bytes=4000000000
+    launch CUDA kernel file=.../main.f90 function=main line=23 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L23_4_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    download CUDA data  file=.../main.f90 function=main line=27 device=0 threadid=1 variable=b(:) bytes=4000000000
+    upload CUDA data  file=.../main.f90 function=main line=30 device=0 threadid=1 variable=a(:) bytes=4000000000
+    upload CUDA data  file=.../main.f90 function=main line=30 device=0 threadid=1 variable=b(:) bytes=4000000000
+    launch CUDA kernel file=.../main.f90 function=main line=30 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L30_6_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    download CUDA data  file=.../main.f90 function=main line=34 device=0 threadid=1 variable=b(:) bytes=4000000000
+    download CUDA data  file=.../main.f90 function=main line=34 device=0 threadid=1 variable=a(:) bytes=4000000000
+     PASS
+    93.92user 4.44system 1:39.31elapsed 99%CPU (0avgtext+0avgdata 7925760maxresident)k
+    0inputs+0outputs (0major+162431minor)pagefaults 0swaps
+#+end_src
+
+* Controlling data motion
+
+As Listing\nbsp[[run:main1]] makes clear, we are moving data unnecessarily - for example in the ~Set~ kernel
+the uninitialised contents of ~b~ are uploaded to the device and the unmodified contents of ~a~ are
+copied back to the host.
+The direction of data motion can be specified by adding ~map~ clauses to the OpenMP directives to
+reduce unnecessary data transfers, considering the ~Set~ kernel we use ~map(to:a) map(from:b)~ to
+eliminate copying ~b~ to the device and ~a~ from the device.
+The program body with these optimisations applied is shown in Listing\nbsp[[src:main2.f90]], note that ~b~
+must be copied to and from the device in the main kernel so that its initialised values are
+available for the operation and modified values are returned for use in the subsequent ~Get~ kernel.
+Listing\nbsp[[run:main2]] shows the trace and timing from running =main2= with reduced data transfer reported
+and correspondingly reduced runtime (\approx50% improvement) as expected.
+
+#+CAPTION: The program body with data motion optimisations (=main2=).
+#+NAME: src:main2.f90
+#+begin_src f90
+  ! Initialise
+  a(:) = 1.0
+
+  ! Set
+  !$omp target teams distribute parallel do map(to:a) map(from:b)
+  do i = 1, n
+     b(i) = a(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  ! Kernel
+  !$omp target teams distribute parallel do map(tofrom:b)
+  do i = 1, n
+     b(i) = 2 * b(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  ! Get
+  !$omp target teams distribute parallel do map(to:b) map(from:a)
+  do i = 1, n
+     a(i) = b(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  if (any(a /= 2.0)) then
+     error stop
+  else
+     print *, "PASS"
+  end if
+#+end_src
+
+#+CAPTION: Running the program with data motion optimisations.
+#+NAME: run:main2
+#+begin_src text
+  $ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main2
+    upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=a$sd1(:) bytes=128
+    upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=b$sd2(:) bytes=128
+    upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=descriptor bytes=128
+    upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=a(:) bytes=4000000000
+    upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=descriptor bytes=128
+    launch CUDA kernel file=.../main2.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    download CUDA data  file=.../main2.f90 function=main line=20 device=0 threadid=1 variable=b(:) bytes=4000000000
+    upload CUDA data  file=.../main2.f90 function=main line=23 device=0 threadid=1 variable=b$sd2(:) bytes=128
+    upload CUDA data  file=.../main2.f90 function=main line=23 device=0 threadid=1 variable=descriptor bytes=128
+    upload CUDA data  file=.../main2.f90 function=main line=23 device=0 threadid=1 variable=b(:) bytes=4000000000
+    launch CUDA kernel file=.../main2.f90 function=main line=23 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L23_4_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    download CUDA data  file=.../main2.f90 function=main line=27 device=0 threadid=1 variable=b(:) bytes=4000000000
+    upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=a$sd1(:) bytes=128
+    upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=b$sd2(:) bytes=128
+    upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=descriptor bytes=128
+    upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=b(:) bytes=4000000000
+    upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=descriptor bytes=128
+    launch CUDA kernel file=.../main2.f90 function=main line=30 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L30_6_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    download CUDA data  file=.../main2.f90 function=main line=34 device=0 threadid=1 variable=a(:) bytes=4000000000
+     PASS
+    44.21user 4.76system 0:49.96elapsed 98%CPU (0avgtext+0avgdata 7925760maxresident)k
+    0inputs+0outputs (0major+200171minor)pagefaults 0swaps 
+#+end_src
+
+* Device-resident data
+
+Although we have achieved a reasonable speedup by controlling data motion, we can still do better.
+In reality array ~b~ is never required on the host: its values are initialised, modified and read on
+the device, the associated data transfers shown in Listing\nbsp[[run:main2]] are therefore unnecessary
+overhead.
+Rather than ~map~'ing ~b~ between the host and device, it can be held resident in device memory by
+creating a ~target data~ region that allocates ~b~ on the device and deletes it on exit.
+This optimisation is shown in Listing\nbsp[[src:main3.f90]], note that all ~map~ clauses for ~b~ have been
+removed and the offloaded code is now within the ~target data~ block that creates ~b~ on the device.
+The reduction in data transfers is confirmed by the trace in Listing\nbsp[[run:main3]] and the total elapsed
+time is now over 10\times less than the original program.
+Without making more drastic changes to the program - for example we don't really need to copy ~a~ into
+~b~, operate on ~b~ then copy the modified result back to ~a~ - this is probably a reasonable limit of
+optimisation that is possible[fn:2].
+
+#+CAPTION: Optimised program with device-resident working array
+#+NAME: src:main3.f90
+#+begin_src f90
+  ! Initialise
+  a(:) = 1.0
+  !$omp target enter data map(alloc:b)
+
+  ! Set
+  !$omp target teams distribute parallel do map(to:a)
+  do i = 1, n
+     b(i) = a(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  ! Kernel
+  !$omp target teams distribute parallel do
+  do i = 1, n
+     b(i) = 2 * b(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  ! Get
+  !$omp target teams distribute parallel do map(from:a)
+  do i = 1, n
+     a(i) = b(i)
+  end do
+  !$omp end target teams distribute parallel do
+
+  if (any(a /= 2.0)) then
+     error stop
+  else
+     print *, "PASS"
+  end if
+
+  !$omp target exit data map(delete:b)
+#+end_src
+
+#+CAPTION: Trace for fully optimised program.
+#+NAME: run:main3
+#+begin_src text
+  $ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main3
+    upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=descriptor bytes=128
+    upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=a$sd1(:) bytes=128
+    upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=descriptor bytes=128
+    upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=a(:) bytes=4000000000
+    launch CUDA kernel file=.../main3.f90 function=main line=17 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L17_2_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    upload CUDA data  file=.../main3.f90 function=main line=24 device=0 threadid=1 variable=descriptor bytes=128
+    launch CUDA kernel file=.../main3.f90 function=main line=24 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L24_4_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    upload CUDA data  file=.../main3.f90 function=main line=31 device=0 threadid=1 variable=descriptor bytes=128
+    upload CUDA data  file=.../main3.f90 function=main line=31 device=0 threadid=1 variable=a$sd1(:) bytes=128
+    upload CUDA data  file=.../main3.f90 function=main line=31 device=0 threadid=1 variable=descriptor bytes=128
+    launch CUDA kernel file=.../main3.f90 function=main line=31 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L31_6_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    download CUDA data  file=.../main3.f90 function=main line=35 device=0 threadid=1 variable=a(:) bytes=4000000000
+     PASS
+    0.52user 3.86system 0:05.37elapsed 81%CPU (0avgtext+0avgdata 4027392maxresident)k
+    0inputs+0outputs (0major+62607minor)pagefaults 0swaps
+#+end_src
+
+* Unified Shared Memory
+
+The initial goal of this work was really to gain an understanding of how device memory can be
+controlled using the OpenMP clauses discussed above, it was out of curiosity that after implementing
+the initial program I turned on unified shared memory by adding ~-gpu=mem:unified~ to the ~FFLAGS~ used
+to compile =main1=.
+This, without any code modification, resulted in a runtime comparable to the fully optimised code in
+Listing\nbsp[[src:main3.f90]]!
+Interestingly the trace does not show any data transfers, however as far as I'm aware the USM
+mechanism still results in data migration to the processing unit that is currently operating on that
+memory.
+
+#+CAPTION: Execution trace when using USM.
+#+NAME: src:main3.f90
+#+begin_src text
+  $ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main1.usm 
+    launch CUDA kernel file=.../main1.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    launch CUDA kernel file=.../main1.f90 function=main line=23 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L23_4_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+    launch CUDA kernel file=.../main1.f90 function=main line=30 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L30_6_ grid=<<<7812500,1,1>>> block=<<<128,1,1>>> shmem=0b
+     PASS
+    1.65user 3.34system 0:06.01elapsed 83%CPU (0avgtext+0avgdata 4027392maxresident)k
+    0inputs+0outputs (1major+14943minor)pagefaults 0swaps
+#+end_src
+
+Based on this result it seems fair to say that USM gives very competitive performance without any
+additional porting effort and, if available, should possibly be used as a starting point from which
+to develop an optimised implementation.
+
+* Footnotes
+
+[fn:1] x3d2: https://github.com/xcompact3d/x3d2
+
+[fn:2] Further improvements might be gained by tuning the kernel launch parameters such as grid and
+thread block dimensions.

@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2025-08-27 Wed 23:17 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>USM: A first look</title>
+<meta name="author" content="Paul Bartholomew" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">USM: A first look</h1>
+<p>
+The major GPU vendors have recently introduced Unified Shared Memory (USM) programming models that
+simplify accelerator programming by presenting a single memory space that is accessible to both the
+host and device.
+With appropriate hardware support this can reduce the effort required to port/develop codes to/for
+accelerators.
+An obvious question to ask is &ldquo;What is the cost of using USM <i>vs</i> controlling the data movements
+manually?&rdquo; in this post I investigate applying some basic data motion-focused optimisations to a
+simple program using OpenMP&rsquo;s target offload directives and compare these against using USM.
+</p>
+
+<p>
+The following experiments were performed on one of EPCC&rsquo;s GH200 Grace-Hopper nodes using <code>nvfortran
+25.1</code>, the code and results are available at <a href="https://github.com/pbartholomew08/omptgt_setget">https://github.com/pbartholomew08/omptgt_setget</a> (commit
+<code>93b1b57</code>).
+Throughout the experiments dynamically allocated arrays of 10<sup>9</sup> 32-bit floats (4 GB) are used.
+Unless stated otherwise programs are compiled using
+</p>
+<div class="org-src-container">
+<pre class="src src-makefile"><span style="color: #7590db;">FFLAGS</span>=-g -O3 -mp=gpu -Minfo=mp
+</pre>
+</div>
+<div id="outline-container-org2244f02" class="outline-2">
+<h2 id="org2244f02"><span class="section-number-2">1.</span> The reference program</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The reference program started as a simplified version of a test case used in developing <code>x3d2</code><sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup>
+in which an array <code>a</code> is initialised on the host, its values copied to array <code>b</code> on the device where it
+is modified by a simple kernel, and finally the modified values copied back to <code>a</code> for validation.
+The main body of the program is shown in Listing&nbsp;<a href="#org4c01b9a">1</a>, as can be seen there is no attempt to
+control data transfers between host and device, each operation simply launches a parallel loop.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 1: </span>The basic program (<code>main1</code>) body.</label><pre class="src src-f90" id="org4c01b9a"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
+</span>a<span style="color: #4f97d7;">(</span>:<span style="color: #4f97d7;">)</span> = 1.0
+
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Set
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = a<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Kernel
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = 2 * b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Get
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   a<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">any</span><span style="color: #bc6ec5;">(</span>a /= 2.0<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">then</span>
+   <span style="color: #4f97d7; font-weight: bold;">error stop</span>
+<span style="color: #4f97d7; font-weight: bold;">else</span>
+   <span style="color: #4f97d7; font-weight: bold;">print</span> *, <span style="color: #2d9574;">"PASS"</span>
+<span style="color: #4f97d7; font-weight: bold;">end if</span>
+</pre>
+</div>
+
+<p>
+Running this code, using <code>time</code> and the <code>NVCOMPILER_ACC_NOTIFY</code> environment variable to measure the
+execution time and trace data transfers between host and device, we can see in Listing&nbsp;<a href="#org3df7e4a">2</a>
+that before each parallel loop the array(s) are copied to the device and after the loop is executed
+they are copied back to the host.
+This excessive data transfer likely explains the 93.92 s runtime.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 2: </span>Running the basic accelerated program.</label><pre class="src src-text" id="org3df7e4a">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main1
+  upload CUDA data  file=.../main.f90 function=main line=16 device=0 threadid=1 variable=b(:) bytes=4000000000
+  upload CUDA data  file=.../main.f90 function=main line=16 device=0 threadid=1 variable=a(:) bytes=4000000000
+  launch CUDA kernel file=.../main.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  download CUDA data  file=.../main.f90 function=main line=20 device=0 threadid=1 variable=a(:) bytes=4000000000
+  download CUDA data  file=.../main.f90 function=main line=20 device=0 threadid=1 variable=b(:) bytes=4000000000
+  upload CUDA data  file=.../main.f90 function=main line=23 device=0 threadid=1 variable=b(:) bytes=4000000000
+  launch CUDA kernel file=.../main.f90 function=main line=23 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L23_4_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  download CUDA data  file=.../main.f90 function=main line=27 device=0 threadid=1 variable=b(:) bytes=4000000000
+  upload CUDA data  file=.../main.f90 function=main line=30 device=0 threadid=1 variable=a(:) bytes=4000000000
+  upload CUDA data  file=.../main.f90 function=main line=30 device=0 threadid=1 variable=b(:) bytes=4000000000
+  launch CUDA kernel file=.../main.f90 function=main line=30 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L30_6_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  download CUDA data  file=.../main.f90 function=main line=34 device=0 threadid=1 variable=b(:) bytes=4000000000
+  download CUDA data  file=.../main.f90 function=main line=34 device=0 threadid=1 variable=a(:) bytes=4000000000
+   PASS
+  93.92user 4.44system 1:39.31elapsed 99%CPU (0avgtext+0avgdata 7925760maxresident)k
+  0inputs+0outputs (0major+162431minor)pagefaults 0swaps
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgab26db4" class="outline-2">
+<h2 id="orgab26db4"><span class="section-number-2">2.</span> Controlling data motion</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+As Listing&nbsp;<a href="#org3df7e4a">2</a> makes clear, we are moving data unnecessarily - for example in the <code>Set</code> kernel
+the uninitialised contents of <code>b</code> are uploaded to the device and the unmodified contents of <code>a</code> are
+copied back to the host.
+The direction of data motion can be specified by adding <code>map</code> clauses to the OpenMP directives to
+reduce unnecessary data transfers, considering the <code>Set</code> kernel we use <code>map(to:a) map(from:b)</code> to
+eliminate copying <code>b</code> to the device and <code>a</code> from the device.
+The program body with these optimisations applied is shown in Listing&nbsp;<a href="#org431f785">3</a>, note that <code>b</code>
+must be copied to and from the device in the main kernel so that its initialised values are
+available for the operation and modified values are returned for use in the subsequent <code>Get</code> kernel.
+Listing&nbsp;<a href="#org2ea6c59">4</a> shows the trace and timing from running <code>main2</code> with reduced data transfer reported
+and correspondingly reduced runtime (&asymp;50% improvement) as expected.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 3: </span>The program body with data motion optimisations (<code>main2</code>).</label><pre class="src src-f90" id="org431f785"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
+</span>a<span style="color: #4f97d7;">(</span>:<span style="color: #4f97d7;">)</span> = 1.0
+
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Set
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do map(to:a) map(from:b)
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = a<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Kernel
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do map(tofrom:b)
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = 2 * b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Get
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do map(to:b) map(from:a)
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   a<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">any</span><span style="color: #bc6ec5;">(</span>a /= 2.0<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">then</span>
+   <span style="color: #4f97d7; font-weight: bold;">error stop</span>
+<span style="color: #4f97d7; font-weight: bold;">else</span>
+   <span style="color: #4f97d7; font-weight: bold;">print</span> *, <span style="color: #2d9574;">"PASS"</span>
+<span style="color: #4f97d7; font-weight: bold;">end if</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 4: </span>Running the program with data motion optimisations.</label><pre class="src src-text" id="org2ea6c59">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main2
+  upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=a$sd1(:) bytes=128
+  upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=b$sd2(:) bytes=128
+  upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=descriptor bytes=128
+  upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=a(:) bytes=4000000000
+  upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=descriptor bytes=128
+  launch CUDA kernel file=.../main2.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  download CUDA data  file=.../main2.f90 function=main line=20 device=0 threadid=1 variable=b(:) bytes=4000000000
+  upload CUDA data  file=.../main2.f90 function=main line=23 device=0 threadid=1 variable=b$sd2(:) bytes=128
+  upload CUDA data  file=.../main2.f90 function=main line=23 device=0 threadid=1 variable=descriptor bytes=128
+  upload CUDA data  file=.../main2.f90 function=main line=23 device=0 threadid=1 variable=b(:) bytes=4000000000
+  launch CUDA kernel file=.../main2.f90 function=main line=23 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L23_4_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  download CUDA data  file=.../main2.f90 function=main line=27 device=0 threadid=1 variable=b(:) bytes=4000000000
+  upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=a$sd1(:) bytes=128
+  upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=b$sd2(:) bytes=128
+  upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=descriptor bytes=128
+  upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=b(:) bytes=4000000000
+  upload CUDA data  file=.../main2.f90 function=main line=30 device=0 threadid=1 variable=descriptor bytes=128
+  launch CUDA kernel file=.../main2.f90 function=main line=30 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L30_6_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  download CUDA data  file=.../main2.f90 function=main line=34 device=0 threadid=1 variable=a(:) bytes=4000000000
+   PASS
+  44.21user 4.76system 0:49.96elapsed 98%CPU (0avgtext+0avgdata 7925760maxresident)k
+  0inputs+0outputs (0major+200171minor)pagefaults 0swaps 
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org69217b3" class="outline-2">
+<h2 id="org69217b3"><span class="section-number-2">3.</span> Device-resident data</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Although we have achieved a reasonable speedup by controlling data motion, we can still do better.
+In reality array <code>b</code> is never required on the host: its values are initialised, modified and read on
+the device, the associated data transfers shown in Listing&nbsp;<a href="#org2ea6c59">4</a> are therefore unnecessary
+overhead.
+Rather than <code>map</code>&rsquo;ing <code>b</code> between the host and device, it can be held resident in device memory by
+creating a <code>target data</code> region that allocates <code>b</code> on the device and deletes it on exit.
+This optimisation is shown in Listing&nbsp;<a href="#org92a6ad2">7</a>, note that all <code>map</code> clauses for <code>b</code> have been
+removed and the offloaded code is now within the <code>target data</code> block that creates <code>b</code> on the device.
+The reduction in data transfers is confirmed by the trace in Listing&nbsp;<a href="#orgbb71555">6</a> and the total elapsed
+time is now over 10&times; less than the original program.
+Without making more drastic changes to the program - for example we don&rsquo;t really need to copy <code>a</code> into
+<code>b</code>, operate on <code>b</code> then copy the modified result back to <code>a</code> - this is probably a reasonable limit of
+optimisation that is possible<sup><a id="fnr.2" class="footref" href="#fn.2" role="doc-backlink">2</a></sup>.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 5: </span>Optimised program with device-resident working array</label><pre class="src src-f90" id="org127be4e"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
+</span>a<span style="color: #4f97d7;">(</span>:<span style="color: #4f97d7;">)</span> = 1.0
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target enter data map(alloc:b)
+</span>
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Set
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do map(to:a)
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = a<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Kernel
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = 2 * b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Get
+</span><span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target teams distribute parallel do map(from:a)
+</span><span style="color: #4f97d7; font-weight: bold;">do</span> i = 1, n
+   a<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span> = b<span style="color: #4f97d7;">(</span>i<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">end do</span>
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp end target teams distribute parallel do
+</span>
+<span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">any</span><span style="color: #bc6ec5;">(</span>a /= 2.0<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">then</span>
+   <span style="color: #4f97d7; font-weight: bold;">error stop</span>
+<span style="color: #4f97d7; font-weight: bold;">else</span>
+   <span style="color: #4f97d7; font-weight: bold;">print</span> *, <span style="color: #2d9574;">"PASS"</span>
+<span style="color: #4f97d7; font-weight: bold;">end if</span>
+
+<span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target exit data map(delete:b)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 6: </span>Trace for fully optimised program.</label><pre class="src src-text" id="orgbb71555">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main3
+  upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=descriptor bytes=128
+  upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=a$sd1(:) bytes=128
+  upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=descriptor bytes=128
+  upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=a(:) bytes=4000000000
+  launch CUDA kernel file=.../main3.f90 function=main line=17 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L17_2_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  upload CUDA data  file=.../main3.f90 function=main line=24 device=0 threadid=1 variable=descriptor bytes=128
+  launch CUDA kernel file=.../main3.f90 function=main line=24 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L24_4_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  upload CUDA data  file=.../main3.f90 function=main line=31 device=0 threadid=1 variable=descriptor bytes=128
+  upload CUDA data  file=.../main3.f90 function=main line=31 device=0 threadid=1 variable=a$sd1(:) bytes=128
+  upload CUDA data  file=.../main3.f90 function=main line=31 device=0 threadid=1 variable=descriptor bytes=128
+  launch CUDA kernel file=.../main3.f90 function=main line=31 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L31_6_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  download CUDA data  file=.../main3.f90 function=main line=35 device=0 threadid=1 variable=a(:) bytes=4000000000
+   PASS
+  0.52user 3.86system 0:05.37elapsed 81%CPU (0avgtext+0avgdata 4027392maxresident)k
+  0inputs+0outputs (0major+62607minor)pagefaults 0swaps
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org342cef6" class="outline-2">
+<h2 id="org342cef6"><span class="section-number-2">4.</span> Unified Shared Memory</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+The initial goal of this work was really to gain an understanding of how device memory can be
+controlled using the OpenMP clauses discussed above, it was out of curiosity that after implementing
+the initial program I turned on unified shared memory by adding <code>-gpu=mem:unified</code> to the <code>FFLAGS</code> used
+to compile <code>main1</code>.
+This, without any code modification, produced a trace which showed only kernel launches and a
+runtime comparable to the fully optimised code in Listing&nbsp;<a href="#org92a6ad2">7</a>!
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 7: </span>Execution trace when using USM.</label><pre class="src src-text" id="org92a6ad2">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main1.usm 
+  launch CUDA kernel file=.../main1.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  launch CUDA kernel file=.../main1.f90 function=main line=23 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L23_4_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  launch CUDA kernel file=.../main1.f90 function=main line=30 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L30_6_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+   PASS
+  1.65user 3.34system 0:06.01elapsed 83%CPU (0avgtext+0avgdata 4027392maxresident)k
+  0inputs+0outputs (1major+14943minor)pagefaults 0swaps
+</pre>
+</div>
+
+<p>
+Based on this result it seems fair to say that USM gives very competitive performance without any
+additional porting effort and, if available, should possibly be used as a starting point from which
+to develop an optimised implementation.
+</p>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+x3d2: <a href="https://github.com/xcompact3d/x3d2">https://github.com/xcompact3d/x3d2</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2" role="doc-backlink">2</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+Further improvements might be gained by tuning the kernel launch parameters such as grid and
+thread block dimensions.
+</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="date">Date: 2025-08-27</p>
+<p class="author">Author: Paul Bartholomew</p>
+<p class="date">Created: 2025-08-27 Wed 23:17</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
