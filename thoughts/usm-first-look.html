@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-08-27 Wed 23:17 -->
+<!-- 2025-08-28 Thu 09:54 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>USM: A first look</title>
@@ -198,9 +198,9 @@
 <div id="content" class="content">
 <h1 class="title">USM: A first look</h1>
 <p>
-The major GPU vendors have recently introduced Unified Shared Memory (USM) programming models that
-simplify accelerator programming by presenting a single memory space that is accessible to both the
-host and device.
+The major GPU vendors have recently introduced Unified Shared Memory (USM) programming
+models<sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup><sup>, </sup><sup><a id="fnr.2" class="footref" href="#fn.2" role="doc-backlink">2</a></sup><sup>, </sup><sup><a id="fnr.3" class="footref" href="#fn.3" role="doc-backlink">3</a></sup> that simplify accelerator programming by presenting a single memory space
+that is accessible to both the host and device.
 With appropriate hardware support this can reduce the effort required to port/develop codes to/for
 accelerators.
 An obvious question to ask is &ldquo;What is the cost of using USM <i>vs</i> controlling the data movements
@@ -219,19 +219,19 @@ Unless stated otherwise programs are compiled using
 <pre class="src src-makefile"><span style="color: #7590db;">FFLAGS</span>=-g -O3 -mp=gpu -Minfo=mp
 </pre>
 </div>
-<div id="outline-container-org2244f02" class="outline-2">
-<h2 id="org2244f02"><span class="section-number-2">1.</span> The reference program</h2>
+<div id="outline-container-org626f117" class="outline-2">
+<h2 id="org626f117"><span class="section-number-2">1.</span> The reference program</h2>
 <div class="outline-text-2" id="text-1">
 <p>
-The reference program started as a simplified version of a test case used in developing <code>x3d2</code><sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup>
+The reference program started as a simplified version of a test case used in developing <code>x3d2</code><sup><a id="fnr.4" class="footref" href="#fn.4" role="doc-backlink">4</a></sup>
 in which an array <code>a</code> is initialised on the host, its values copied to array <code>b</code> on the device where it
 is modified by a simple kernel, and finally the modified values copied back to <code>a</code> for validation.
-The main body of the program is shown in Listing&nbsp;<a href="#org4c01b9a">1</a>, as can be seen there is no attempt to
+The main body of the program is shown in Listing&nbsp;<a href="#orge4ce730">1</a>, as can be seen there is no attempt to
 control data transfers between host and device, each operation simply launches a parallel loop.
 </p>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 1: </span>The basic program (<code>main1</code>) body.</label><pre class="src src-f90" id="org4c01b9a"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
+<label class="org-src-name"><span class="listing-number">Listing 1: </span>The basic program (<code>main1</code>) body.</label><pre class="src src-f90" id="orge4ce730"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
 </span>a<span style="color: #4f97d7;">(</span>:<span style="color: #4f97d7;">)</span> = 1.0
 
 <span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Set
@@ -265,14 +265,14 @@ control data transfers between host and device, each operation simply launches a
 
 <p>
 Running this code, using <code>time</code> and the <code>NVCOMPILER_ACC_NOTIFY</code> environment variable to measure the
-execution time and trace data transfers between host and device, we can see in Listing&nbsp;<a href="#org3df7e4a">2</a>
+execution time and trace data transfers between host and device, we can see in Listing&nbsp;<a href="#org6f3b46f">2</a>
 that before each parallel loop the array(s) are copied to the device and after the loop is executed
 they are copied back to the host.
 This excessive data transfer likely explains the 93.92 s runtime.
 </p>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 2: </span>Running the basic accelerated program.</label><pre class="src src-text" id="org3df7e4a">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main1
+<label class="org-src-name"><span class="listing-number">Listing 2: </span>Running the basic accelerated program, the addition of <code>OMP_TARGET_OFFLOAD=MANDATORY</code> ensures that host fall back code is not used in <code>target</code> regions.</label><pre class="src src-text" id="org6f3b46f">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main1
   upload CUDA data  file=.../main.f90 function=main line=16 device=0 threadid=1 variable=b(:) bytes=4000000000
   upload CUDA data  file=.../main.f90 function=main line=16 device=0 threadid=1 variable=a(:) bytes=4000000000
   launch CUDA kernel file=.../main.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
@@ -293,25 +293,54 @@ This excessive data transfer likely explains the 93.92 s runtime.
 </div>
 </div>
 </div>
-<div id="outline-container-orgab26db4" class="outline-2">
-<h2 id="orgab26db4"><span class="section-number-2">2.</span> Controlling data motion</h2>
+<div id="outline-container-orgf4c55c4" class="outline-2">
+<h2 id="orgf4c55c4"><span class="section-number-2">2.</span> Unified Shared Memory</h2>
 <div class="outline-text-2" id="text-2">
 <p>
-As Listing&nbsp;<a href="#org3df7e4a">2</a> makes clear, we are moving data unnecessarily - for example in the <code>Set</code> kernel
-the uninitialised contents of <code>b</code> are uploaded to the device and the unmodified contents of <code>a</code> are
-copied back to the host.
+The initial goal of this work was really to gain an understanding of how device memory can be
+controlled to optimise performance using OpenMP, it was out of curiosity that after implementing the
+initial program I turned on unified shared memory by adding <code>-gpu=mem:unified</code> to the <code>FFLAGS</code> used to
+compile <code>main1</code>, outside of this test this compiler flags is not used.
+As comparing the time reported in Listing&nbsp;<a href="#org065b278">3</a> against Listing&nbsp;<a href="#org6f3b46f">2</a> shows, enabling
+USM, without any code modification, resulted in a more than 10&times; speedup!
+This raises the question: how does this compare to manual memory management, is this good
+performance or can we do better?
+Interestingly the trace does not show any data transfers, however as far as I&rsquo;m aware the USM
+mechanism still results in data migration to the processing unit that is currently operating on that
+memory.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 3: </span>Execution trace when using USM.</label><pre class="src src-text" id="org065b278">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main1.usm 
+  launch CUDA kernel file=.../main1.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  launch CUDA kernel file=.../main1.f90 function=main line=23 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L23_4_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+  launch CUDA kernel file=.../main1.f90 function=main line=30 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L30_6_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
+   PASS
+  1.65user 3.34system 0:06.01elapsed 83%CPU (0avgtext+0avgdata 4027392maxresident)k
+  0inputs+0outputs (1major+14943minor)pagefaults 0swaps
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org98f880b" class="outline-2">
+<h2 id="org98f880b"><span class="section-number-2">3.</span> Controlling data motion</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+As Listing&nbsp;<a href="#org6f3b46f">2</a> makes clear, without USM we are moving data unnecessarily - for example in the
+<code>Set</code> kernel the uninitialised contents of <code>b</code> are uploaded to the device and the unmodified contents of
+<code>a</code> are copied back to the host.
 The direction of data motion can be specified by adding <code>map</code> clauses to the OpenMP directives to
-reduce unnecessary data transfers, considering the <code>Set</code> kernel we use <code>map(to:a) map(from:b)</code> to
-eliminate copying <code>b</code> to the device and <code>a</code> from the device.
-The program body with these optimisations applied is shown in Listing&nbsp;<a href="#org431f785">3</a>, note that <code>b</code>
+reduce data transfers, considering the <code>Set</code> kernel we use <code>map(to:a) map(from:b)</code> to eliminate copying
+<code>b</code> to the device and <code>a</code> from the device.
+The program body with these optimisations applied is shown in Listing&nbsp;<a href="#org44b1ca5">4</a>, note that <code>b</code>
 must be copied to and from the device in the main kernel so that its initialised values are
 available for the operation and modified values are returned for use in the subsequent <code>Get</code> kernel.
-Listing&nbsp;<a href="#org2ea6c59">4</a> shows the trace and timing from running <code>main2</code> with reduced data transfer reported
+Listing&nbsp;<a href="#org1cda12c">5</a> shows the trace and timing from running <code>main2</code> with reduced data transfer reported
 and correspondingly reduced runtime (&asymp;50% improvement) as expected.
 </p>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 3: </span>The program body with data motion optimisations (<code>main2</code>).</label><pre class="src src-f90" id="org431f785"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
+<label class="org-src-name"><span class="listing-number">Listing 4: </span>The program body with data motion optimisations (<code>main2</code>).</label><pre class="src src-f90" id="org44b1ca5"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
 </span>a<span style="color: #4f97d7;">(</span>:<span style="color: #4f97d7;">)</span> = 1.0
 
 <span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Set
@@ -344,7 +373,7 @@ and correspondingly reduced runtime (&asymp;50% improvement) as expected.
 </div>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 4: </span>Running the program with data motion optimisations.</label><pre class="src src-text" id="org2ea6c59">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main2
+<label class="org-src-name"><span class="listing-number">Listing 5: </span>Running the program with data motion optimisations.</label><pre class="src src-text" id="org1cda12c">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main2
   upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=a$sd1(:) bytes=128
   upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=b$sd2(:) bytes=128
   upload CUDA data  file=.../main2.f90 function=main line=16 device=0 threadid=1 variable=descriptor bytes=128
@@ -371,27 +400,27 @@ and correspondingly reduced runtime (&asymp;50% improvement) as expected.
 </div>
 </div>
 </div>
-<div id="outline-container-org69217b3" class="outline-2">
-<h2 id="org69217b3"><span class="section-number-2">3.</span> Device-resident data</h2>
-<div class="outline-text-2" id="text-3">
+<div id="outline-container-orgafd915e" class="outline-2">
+<h2 id="orgafd915e"><span class="section-number-2">4.</span> Device-resident data</h2>
+<div class="outline-text-2" id="text-4">
 <p>
 Although we have achieved a reasonable speedup by controlling data motion, we can still do better.
 In reality array <code>b</code> is never required on the host: its values are initialised, modified and read on
-the device, the associated data transfers shown in Listing&nbsp;<a href="#org2ea6c59">4</a> are therefore unnecessary
+the device, the associated data transfers shown in Listing&nbsp;<a href="#org1cda12c">5</a> are therefore unnecessary
 overhead.
 Rather than <code>map</code>&rsquo;ing <code>b</code> between the host and device, it can be held resident in device memory by
 creating a <code>target data</code> region that allocates <code>b</code> on the device and deletes it on exit.
-This optimisation is shown in Listing&nbsp;<a href="#org92a6ad2">7</a>, note that all <code>map</code> clauses for <code>b</code> have been
+This optimisation is shown in Listing&nbsp;<a href="#org1c04179">6</a>, note that all <code>map</code> clauses for <code>b</code> have been
 removed and the offloaded code is now within the <code>target data</code> block that creates <code>b</code> on the device.
-The reduction in data transfers is confirmed by the trace in Listing&nbsp;<a href="#orgbb71555">6</a> and the total elapsed
+The reduction in data transfers is confirmed by the trace in Listing&nbsp;<a href="#org366d589">7</a> and the total elapsed
 time is now over 10&times; less than the original program.
 Without making more drastic changes to the program - for example we don&rsquo;t really need to copy <code>a</code> into
 <code>b</code>, operate on <code>b</code> then copy the modified result back to <code>a</code> - this is probably a reasonable limit of
-optimisation that is possible<sup><a id="fnr.2" class="footref" href="#fn.2" role="doc-backlink">2</a></sup>.
+optimisation that is possible<sup><a id="fnr.5" class="footref" href="#fn.5" role="doc-backlink">5</a></sup>.
 </p>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 5: </span>Optimised program with device-resident working array</label><pre class="src src-f90" id="org127be4e"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
+<label class="org-src-name"><span class="listing-number">Listing 6: </span>Optimised program with device-resident working array</label><pre class="src src-f90" id="org1c04179"><span style="color: #2aa1ae; background-color: #292e34;">! </span><span style="color: #2aa1ae; background-color: #292e34;">Initialise
 </span>a<span style="color: #4f97d7;">(</span>:<span style="color: #4f97d7;">)</span> = 1.0
 <span style="color: #2aa1ae; background-color: #292e34;">!</span><span style="color: #2aa1ae; background-color: #292e34;">$omp target enter data map(alloc:b)
 </span>
@@ -427,7 +456,7 @@ optimisation that is possible<sup><a id="fnr.2" class="footref" href="#fn.2" rol
 </div>
 
 <div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 6: </span>Trace for fully optimised program.</label><pre class="src src-text" id="orgbb71555">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main3
+<label class="org-src-name"><span class="listing-number">Listing 7: </span>Trace for fully optimised program.</label><pre class="src src-text" id="org366d589">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main3
   upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=descriptor bytes=128
   upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=a$sd1(:) bytes=128
   upload CUDA data  file=.../main3.f90 function=main line=17 device=0 threadid=1 variable=descriptor bytes=128
@@ -447,33 +476,18 @@ optimisation that is possible<sup><a id="fnr.2" class="footref" href="#fn.2" rol
 </div>
 </div>
 </div>
-<div id="outline-container-org342cef6" class="outline-2">
-<h2 id="org342cef6"><span class="section-number-2">4.</span> Unified Shared Memory</h2>
-<div class="outline-text-2" id="text-4">
+<div id="outline-container-org16ebc7e" class="outline-2">
+<h2 id="org16ebc7e"><span class="section-number-2">5.</span> Conclusion</h2>
+<div class="outline-text-2" id="text-5">
 <p>
-The initial goal of this work was really to gain an understanding of how device memory can be
-controlled using the OpenMP clauses discussed above, it was out of curiosity that after implementing
-the initial program I turned on unified shared memory by adding <code>-gpu=mem:unified</code> to the <code>FFLAGS</code> used
-to compile <code>main1</code>.
-This, without any code modification, produced a trace which showed only kernel launches and a
-runtime comparable to the fully optimised code in Listing&nbsp;<a href="#org92a6ad2">7</a>!
-</p>
-
-<div class="org-src-container">
-<label class="org-src-name"><span class="listing-number">Listing 7: </span>Execution trace when using USM.</label><pre class="src src-text" id="org92a6ad2">$ NVCOMPILER_ACC_NOTIFY=3 OMP_TARGET_OFFLOAD=MANDATORY time ./main1.usm 
-  launch CUDA kernel file=.../main1.f90 function=main line=16 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L16_2_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
-  launch CUDA kernel file=.../main1.f90 function=main line=23 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L23_4_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
-  launch CUDA kernel file=.../main1.f90 function=main line=30 device=0 host-threadid=0 num_teams=0 thread_limit=0 kernelname=nvkernel_MAIN__F1L30_6_ grid=&lt;&lt;&lt;7812500,1,1&gt;&gt;&gt; block=&lt;&lt;&lt;128,1,1&gt;&gt;&gt; shmem=0b
-   PASS
-  1.65user 3.34system 0:06.01elapsed 83%CPU (0avgtext+0avgdata 4027392maxresident)k
-  0inputs+0outputs (1major+14943minor)pagefaults 0swaps
-</pre>
-</div>
-
-<p>
-Based on this result it seems fair to say that USM gives very competitive performance without any
-additional porting effort and, if available, should possibly be used as a starting point from which
-to develop an optimised implementation.
+Comparing the timings reported for the reference program with USM enabled and the hand-optimised
+version without USM (see Listings&nbsp;<a href="#org065b278">3</a> and <a href="#org366d589">7</a>) shows that there is very little
+performance impact from using USM, and a more careful measurement of performance combined with
+repeated measurements may even reveal negligible differences between the two approaches.
+Although further testing is necessary including testing different vendor&rsquo;s hardware and associated
+compilers, and it must be noted that this example is extremely simple and contrived, using USM to
+initially port/develop a program for accelerators seems like a reasonable approach if suitable
+hardware is available.
 </p>
 </div>
 </div>
@@ -482,10 +496,25 @@ to develop an optimised implementation.
 <div id="text-footnotes">
 
 <div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
-x3d2: <a href="https://github.com/xcompact3d/x3d2">https://github.com/xcompact3d/x3d2</a>
+Intel Unified Shared Memory documentation:
+<a href="https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2024-0/host-device-memory-buffer-and-usm.html">https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2024-0/host-device-memory-buffer-and-usm.html</a>
 </p></div></div>
 
 <div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2" role="doc-backlink">2</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+AMD Unified Shared Memory documentation:
+<a href="https://rocm.docs.amd.com/projects/llvm-project/en/latest/conceptual/openmp.html#unified-shared-memory">https://rocm.docs.amd.com/projects/llvm-project/en/latest/conceptual/openmp.html#unified-shared-memory</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.3" class="footnum" href="#fnr.3" role="doc-backlink">3</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+Nvidia Unified Shared Memory documentation:
+<a href="https://docs.nvidia.com/hpc-sdk/archive/24.3/compilers/hpc-compilers-user-guide/index.html#openmp-unified-mem">https://docs.nvidia.com/hpc-sdk/archive/24.3/compilers/hpc-compilers-user-guide/index.html#openmp-unified-mem</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.4" class="footnum" href="#fnr.4" role="doc-backlink">4</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+x3d2: <a href="https://github.com/xcompact3d/x3d2">https://github.com/xcompact3d/x3d2</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.5" class="footnum" href="#fnr.5" role="doc-backlink">5</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
 Further improvements might be gained by tuning the kernel launch parameters such as grid and
 thread block dimensions.
 </p></div></div>
@@ -494,9 +523,9 @@ thread block dimensions.
 </div>
 </div></div>
 <div id="postamble" class="status">
-<p class="date">Date: 2025-08-27</p>
+<p class="date">Date: 2025-08-28</p>
 <p class="author">Author: Paul Bartholomew</p>
-<p class="date">Created: 2025-08-27 Wed 23:17</p>
+<p class="date">Created: 2025-08-28 Thu 09:54</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
