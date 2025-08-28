@@ -18,4 +18,4 @@ Bit plain because I got fed up of Jekyll and don't know CSS (yet).
 
 *** August
 
-- [2025-08-27 Wed] [[./thoughts/usm-first-look.org][USM: A first look]]
+- [2025-08-28 Thu] [[./thoughts/usm-first-look.org][USM: A first look]]
