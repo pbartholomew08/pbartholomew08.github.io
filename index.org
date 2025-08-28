@@ -14,3 +14,8 @@ Bit plain because I got fed up of Jekyll and don't know CSS (yet).
 
 - [2023-03-08 Wed] [[./thoughts/testing_pure_fortran.org][Better procedure design using the Fortran pure attribute]]
   
+** 2025
+
+*** August
+
+- [2025-08-27 Wed] [[./thoughts/usm-first-look.org][USM: A first look]]
