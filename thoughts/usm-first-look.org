@@ -10,11 +10,18 @@
 #+LATEX_HEADER: \usepackage{fullpage}
 #+LATEX_HEADER: \hypersetup{colorlinks}
 
-The major GPU vendors have recently introduced Unified Shared Memory (USM) programming
-models[fn:1][fn:2][fn:3] that simplify accelerator programming by presenting a single memory space
-that is accessible to both the host and device.
-With appropriate hardware support this can reduce the effort required to port/develop codes to/for
-accelerators.
+[2025-09-01 Mon] Updated introduction with eCSE project.
+
+When porting HPC codes to GPU-based architectures, a major concern is whether the cost of data
+movement between the host and device will outweigh the benefit due to accelerating the computation
+on the GPU.
+As part of work on the ARCHER2 eCSE project "Porting x3d2 to AMD GPUs" I have been exploring some
+optimisations available in OpenMP to control data movement and comparing this with the Unified Shared
+Memory (USM) programming model.
+Unified Shared Memory is available in recent hardware from the major GPU vendors[fn:1][fn:2][fn:3]
+and simplifies accelerator programming by presenting a single memory space that is accessible to
+both the host and device; with appropriate hardware support this can reduce the effort required to
+port/develop codes to/for accelerators.
 An obvious question to ask is "What is the cost of using USM /vs/ controlling the data movements
 manually?" in this post I investigate applying some basic data motion-focused optimisations to a
 simple program using OpenMP's target offload directives and compare these against using USM.
